@@ -318,7 +318,7 @@ def make_clusters(cloudlets, old_clusters, MC):
 #---------------------
 
 def load_cloudlets(t, MC):
-    items = ['core', 'condensed', 'plume', 'u_condensed', 'v_condensed', \
+    cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', 'v_condensed', \
         'w_condensed', 'u_plume', 'v_plume', 'w_plume']
 
     with h5py.File('hdf5/cloudlets_%08g.h5' % t, 'r') as cloudlets:
@@ -333,8 +333,8 @@ def load_cloudlets(t, MC):
                 or (len(cloudlets[i]['core']) > 0)):
 
                 # FIXME: The following loop takes a long time
-                for var in items:
-                    cloudlet[var] = cloudlets[i][var][...]
+                for var in cloudlet_items:
+                    cloudlet[var] = cloudlets['%s/%s' % (i, var)][...]
                 result.append( Cloudlet( n, t, cloudlet, MC ) )
                 n = n + 1
 
@@ -358,7 +358,6 @@ def save_clusters(clusters, t):
     # NOTE: Ignore cluster_objects
     #cPickle.dump(clusters, open('pkl/cluster_objects_%08g.pkl' % t, 'wb'))
 
-@profile
 def cluster_cloudlets(MC):
 
     print "cluster cloudlets; time step: 0"
@@ -383,7 +382,7 @@ def cluster_cloudlets(MC):
         print "\t%d clusters" % len(new_clusters)
 
         save_clusters(new_clusters, t)
-        gc.collect()
+        #gc.collect() # Note: Garbage collection
 
     
 if __name__ == "__main__":

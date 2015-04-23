@@ -3,7 +3,7 @@
 
 import cPickle as pickle
 import h5py
-import os, sys, gc
+import gc
 import networkx
 
 full_output=False
@@ -44,30 +44,30 @@ def full_output(cloud_times, cloud_graphs, merges, splits, MC):
 
         clouds[n] = events
         n = n + 1
-        
+
     pickle.dump(clouds, open('pkl/graph_events.pkl', 'wb'))
 
     
 
 
 #---------------------
-
+@profile
 def make_graph(MC):
     graph = networkx.Graph()
 
     merges = {}
     splits = {}
-
+    
     for t in range(MC['nt']):
         with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as clusters:
             for id in clusters:
                 # Make dictionaries of every split and every merge event that occurs
                 # in a cluster's lifecycle
-                m_conns = list(clusters[id]['merge_connections'][...])
-                s_conns = list(clusters[id]['split_connections'][...])
-                core = len(clusters[id]['core'][...])
-                condensed = len(clusters[id]['condensed'][...])
-                plume = len(clusters[id]['plume'][...])
+                m_conns = list(clusters['%s/merge_connections' % id][...])
+                s_conns = list(clusters['%s/split_connections' % id][...])
+                core = len(clusters['%s/core' % id][...])
+                condensed = len(clusters['%s/condensed' % id][...])
+                plume = len(clusters['%s/plume' % id][...])
                 attr_dict = {'merge': m_conns,
                              'split': s_conns,
                              'core': core,
@@ -89,7 +89,7 @@ def make_graph(MC):
                     for item in clusters[id]['past_connections'][...]:
                         graph.add_edge('%08g|%08g' % (t-1, item),
                                        '%08g|%08g' % (t, int(id)))
-        gc.collect()
+        # gc.collect() # NOTE: Garbage collection
 
     # Iterate over every cloud in the graph
     for subgraph in networkx.connected_component_subgraphs(graph):

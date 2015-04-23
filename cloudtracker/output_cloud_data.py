@@ -63,7 +63,6 @@ def calc_env(index, shellindex, edgeindex, MC):
 
     return envindex
 
-@profile
 def calculate_data(cluster, MC):
     result = {}
 
@@ -128,7 +127,7 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
             key = "%08g|%08g" % (t, int(id))
 
             for var in items:
-                cluster[var] = cluster_dict[id][var][...]
+                cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
             clusters[key] = cluster
 
     clouds = {}
@@ -188,7 +187,7 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
             for var in items:
                 dset = grp.create_dataset(var, data=clouds[i][var])
 
-    save_text_file(clouds, t, MC)
+    # save_text_file(clouds, t, MC)
 
 #   save .mat file for matlab
 #    new_dict = {}

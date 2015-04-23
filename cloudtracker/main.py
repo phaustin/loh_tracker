@@ -44,7 +44,7 @@ def main(MC, save_all=True):
     nz = MC['nz']
     nt = MC['nt']
 
-    items = ['core', 'condensed', 'plume', 'u_condensed', 'v_condensed', \
+    cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', 'v_condensed', \
         'w_condensed', 'u_plume', 'v_plume', 'w_plume']
 
     filelist = glob.glob('%s/*' % input_dir)
@@ -68,10 +68,11 @@ def main(MC, save_all=True):
 
         cloudlets = generate_cloudlets(core, condensed, plume, u, v, w, MC)
         
+        # TEST: linear calls instead of for lodop to speed this up?
         with h5py.File('hdf5/cloudlets_%08g.h5' % n, "w") as f:
             for i in range(len(cloudlets)):
                 grp = f.create_group(str(i))
-                for var in items:
+                for var in cloudlet_items:
                     dset = grp.create_dataset(var, data=cloudlets[i][var])
         gc.collect() # NOTE: Force garbage-collection at the end of loop
 
@@ -88,20 +89,19 @@ def main(MC, save_all=True):
     
     print "\tFound %d clouds" % len(cloud_graphs)
 
-    if save_all:
-        # FIXME: Object dtype dtype('object') has no native HDF5 equivalent
-        # with h5py.File('hdf5/graph_data.h5', 'w') as f:
-        #     dset = f.create_dataset('cloud_graphs', data=cloud_graphs)
-        #     dset = f.create_dataset('cloud_noise', data=cloud_noise)
-        # #cPickle.dump((cloud_graphs, cloud_noise), open('pkl/graph_data.pkl', 'wb'))
-        pass
+    # if save_all:
+    #     FIXME: Object dtype dtype('object') has no native HDF5 equivalent
+    #     with h5py.File('hdf5/graph_data.h5', 'w') as f:
+    #         dset = f.create_dataset('cloud_graphs', data=cloud_graphs)
+    #         dset = f.create_dataset('cloud_noise', data=cloud_noise)
+    #     #cPickle.dump((cloud_graphs, cloud_noise), open('pkl/graph_data.pkl', 'wb'))
             
 #----output----
-
     # TODO: Parallelize file output (multiprocessing)
     for n in range(nt):
         print "output cloud data, time step: %d" % n
 
         output_cloud_data(cloud_graphs, cloud_noise, n, MC)
-        gc.collect()
+        n = gc.collect() # Note: Garbage collection
+        print "Unreacheable objects: ", n
             
