@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import absolute_import
+
 import numpy
 import glob
 import sys, os, gc
 import h5py
 
-from generate_cloudlets import generate_cloudlets
-from cluster_cloudlets import cluster_cloudlets
-from make_graph import make_graph
-from output_cloud_data import output_cloud_data
+from .generate_cloudlets import generate_cloudlets
+from .cluster_cloudlets import cluster_cloudlets
+from .make_graph import make_graph
+from .output_cloud_data import output_cloud_data
 
 try:
 	from netCDF4 import Dataset
@@ -36,7 +39,7 @@ def load_data(filename):
 
 #---------------
 
-@profile
+#@profile
 def main(MC, save_all=True):
     input_dir = MC['input_directory']
     nx = MC['nx']
@@ -63,7 +66,7 @@ def main(MC, save_all=True):
 
     # TODO: Parallelize file access (multiprocessing) 
     for n, filename in enumerate(filelist):
-        print "generate cloudlets; time step: %d" % n
+        print("generate cloudlets; time step: %d" % n)
         core, condensed, plume, u, v, w = load_data(filename)
 
         cloudlets = generate_cloudlets(core, condensed, plume, u, v, w, MC)
@@ -77,17 +80,17 @@ def main(MC, save_all=True):
         gc.collect() # NOTE: Force garbage-collection at the end of loop
 
 #----cluster----
-    print "Making clusters"
+    print("Making clusters")
 
     cluster_cloudlets(MC)
 
 #----graph----
 
-    print "make graph"
+    print("make graph")
 
     cloud_graphs, cloud_noise = make_graph(MC)
     
-    print "\tFound %d clouds" % len(cloud_graphs)
+    print("\tFound %d clouds" % len(cloud_graphs))
 
     # if save_all:
     #     FIXME: Object dtype dtype('object') has no native HDF5 equivalent
@@ -97,11 +100,14 @@ def main(MC, save_all=True):
     #     #cPickle.dump((cloud_graphs, cloud_noise), open('pkl/graph_data.pkl', 'wb'))
             
 #----output----
+
     # TODO: Parallelize file output (multiprocessing)
-    for n in range(nt):
-        print "output cloud data, time step: %d" % n
+    #for n in range(nt):
+    for n in range(55, 58):
+        print("output cloud data, time step: %d" % n)
 
         output_cloud_data(cloud_graphs, cloud_noise, n, MC)
-        n = gc.collect() # Note: Garbage collection
-        print "Unreacheable objects: ", n
+        #n = gc.collect() # Note: Garbage collection
+        #print sys.getallocatedblocks(), " blocks allocated"
+        # print("Unreacheable objects: ", n)
             

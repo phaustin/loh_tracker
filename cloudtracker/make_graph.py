@@ -51,13 +51,13 @@ def full_output(cloud_times, cloud_graphs, merges, splits, MC):
 
 
 #---------------------
-@profile
+
 def make_graph(MC):
     graph = networkx.Graph()
 
     merges = {}
     splits = {}
-    
+
     for t in range(MC['nt']):
         with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as clusters:
             for id in clusters:
@@ -89,7 +89,7 @@ def make_graph(MC):
                     for item in clusters[id]['past_connections'][...]:
                         graph.add_edge('%08g|%08g' % (t-1, item),
                                        '%08g|%08g' % (t, int(id)))
-        # gc.collect() # NOTE: Garbage collection
+    gc.collect() # NOTE: Garbage collection
 
     # Iterate over every cloud in the graph
     for subgraph in networkx.connected_component_subgraphs(graph):

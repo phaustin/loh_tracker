@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 # Runtime (690, 130, 128, 128): 1 hour 20 minutes
 
+from __future__ import print_function
+from __future__ import absolute_import
+
 import pickle
 import h5py
 import networkx
 import numpy
-from utility_functions import zyx_to_index, index_to_zyx, calc_radii, \
+from .utility_functions import zyx_to_index, index_to_zyx, calc_radii, \
     expand_indexes
 import sys, gc
 #import scipy.io
+
+from pympler import summary
+from pympler import muppy
+
+all_objects = muppy.get_objects()
 
 def calc_shell(index, MC):
     # Expand the cloud points outward
@@ -28,7 +36,7 @@ def calc_edge(index, shellindex, MC):
 
     return edgeindex
 
-
+# @profile
 def calc_env(index, shellindex, edgeindex, MC):
     if len(shellindex) > 0:
         K_J_I = index_to_zyx(shellindex, MC)
@@ -63,6 +71,7 @@ def calc_env(index, shellindex, edgeindex, MC):
 
     return envindex
 
+# @profile # FIXME: Memory leak / infinite loop here
 def calculate_data(cluster, MC):
     result = {}
 
@@ -112,20 +121,24 @@ def save_text_file(clouds, t, MC):
     # TODO(loh): Dump HDF5 instead
     recarray.tofile(open('output/clouds_at_time_%08g.txt' % t, 'w'), '\r\n')
 
-@profile
+# @profile
 def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
 
-    print 'Timestep:', t
+    print('Timestep:', t)
 
     # Load the cluster zyx data for the current time
-    clusters = {}
     cluster = {}
+    clusters = {}
     items = ['core', 'condensed', 'plume']
 
     with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
         for id in cluster_dict:
             key = "%08g|%08g" % (t, int(id))
 
+            #clusters[key] = dict(zip(items, numpy.array([cluster_dict['%s/%s' % (id, 'core')][...], \
+            #    cluster_dict['%s/%s' % (id, 'condensed')][...], cluster_dict['%s/%s' % (id, 'plume')][...]])))
+
+            # TEST: ensure the above clusters dict is the same
             for var in items:
                 cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
             clusters[key] = cluster
@@ -177,15 +190,17 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
     # Only save the noise if it contains cloud core
     clouds[-1] = calculate_data(noise_clust, MC)
             
-    print "Number of Clouds at Current Timestep: ", len(clouds.keys())
+    print("Number of Clouds at Current Timestep: ", len(clouds.keys()))
 
     items = ['core', 'condensed', 'plume', 'core_shell', 'condensed_shell', \
         'core_edge', 'condensed_edge', 'core_env', 'condensed_env']
     with h5py.File('hdf5/clouds_%08g.h5' % t, 'w') as f:
-        for i in clouds:
+        for i in clouds.keys():
             grp = f.create_group(str(i))
             for var in items:
                 dset = grp.create_dataset(var, data=clouds[i][var])
+    clusters.clear()
+    clouds.clear()
 
     # save_text_file(clouds, t, MC)
 
