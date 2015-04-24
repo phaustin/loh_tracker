@@ -142,6 +142,7 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
             for var in items:
                 cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
             clusters[key] = cluster
+            cluster = {}
 
     clouds = {}
     id = 0
