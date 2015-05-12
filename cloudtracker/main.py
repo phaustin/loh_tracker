@@ -46,15 +46,15 @@ def main(MC, save_all=True):
     ny = MC['ny']
     nz = MC['nz']
     nt = MC['nt']
-
+    
     cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', 'v_condensed', \
         'w_condensed', 'u_plume', 'v_plume', 'w_plume']
 
     filelist = glob.glob('%s/*' % input_dir)
     filelist.sort()
-    
-    if (len(filelist) != nt):
-        raise Exception("Only %d files found, nt=%d files expected" % (len(filelist), nt))
+
+    #if (len(filelist) != nt):
+    #    raise Exception("Only %d files found, nt=%d files expected" % (len(filelist), nt))
 
     if not os.path.exists('pkl'):
         os.mkdir('pkl')
@@ -71,17 +71,23 @@ def main(MC, save_all=True):
 
         cloudlets = generate_cloudlets(core, condensed, plume, u, v, w, MC)
         
+        # NOTE: cloudlet save/load works properly
         # TEST: linear calls instead of for lodop to speed this up?
         with h5py.File('hdf5/cloudlets_%08g.h5' % n, "w") as f:
             for i in range(len(cloudlets)):
                 grp = f.create_group(str(i))
                 for var in cloudlet_items:
-                    dset = grp.create_dataset(var, data=cloudlets[i][var])
-        gc.collect() # NOTE: Force garbage-collection at the end of loop
+                    if(var in ['core', 'condensed', 'plume']):
+                        dset = grp.create_dataset(var, data=cloudlets[i][var][...])
+                    else:
+                        deset = grp.create_dataset(var, data=cloudlets[i][var])
 
+        gc.collect() # NOTE: Force garbage-collection at the end of loop
+    
 #----cluster----
     print("Making clusters")
 
+    # FIXME: cluster save/load does not work properly
     cluster_cloudlets(MC)
 
 #----graph----

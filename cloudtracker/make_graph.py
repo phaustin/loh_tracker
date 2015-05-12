@@ -63,11 +63,11 @@ def make_graph(MC):
             for id in clusters:
                 # Make dictionaries of every split and every merge event that occurs
                 # in a cluster's lifecycle
-                m_conns = list(clusters['%s/merge_connections' % id][...])
-                s_conns = list(clusters['%s/split_connections' % id][...])
-                core = len(clusters['%s/core' % id][...])
-                condensed = len(clusters['%s/condensed' % id][...])
-                plume = len(clusters['%s/plume' % id][...])
+                m_conns = set(clusters['%s/merge_connections' % id])
+                s_conns = set(clusters['%s/split_connections' % id])
+                core = len(clusters['%s/core' % id])
+                condensed = len(clusters['%s/condensed' % id])
+                plume = len(clusters['%s/plume' % id])
                 attr_dict = {'merge': m_conns,
                              'split': s_conns,
                              'core': core,
@@ -85,11 +85,11 @@ def make_graph(MC):
             
                 # Construct a graph of the cloudlet connections
                 graph.add_node('%08g|%08g' % (t, int(id)), attr_dict = attr_dict)
-                if clusters[id]['past_connections'][...]:
-                    for item in clusters[id]['past_connections'][...]:
+                if clusters[id]['past_connections']:
+                    for item in clusters[id]['past_connections']:
                         graph.add_edge('%08g|%08g' % (t-1, item),
                                        '%08g|%08g' % (t, int(id)))
-    gc.collect() # NOTE: Garbage collection
+        gc.collect() # NOTE: Garbage collection
 
     # Iterate over every cloud in the graph
     for subgraph in networkx.connected_component_subgraphs(graph):

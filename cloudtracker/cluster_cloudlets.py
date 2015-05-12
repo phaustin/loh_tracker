@@ -173,7 +173,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
                 try:
                     core_list.remove( cloudlet )
                 except:
-                    cloud_list.remove( cloudlet )
+                    raise
             cluster.add_cloudlets( acondenseds )
             acondenseds = cluster.adjacent_cloudlets('condensed')
 
@@ -329,16 +329,15 @@ def load_cloudlets(t, MC):
         n = 0
 
         # TODO: Parallelize 
-        for i in cloudlets:
-            if ((len(cloudlets[i]['plume']) > 7) 
-                or (len(cloudlets[i]['condensed']) > 1)
-                or (len(cloudlets[i]['core']) > 0)):
+        for i in range(len(cloudlets)):
+            if ((len(cloudlets[str(i)]['plume']) > 7) 
+                or (len(cloudlets[str(i)]['condensed']) > 1)
+                or (len(cloudlets[str(i)]['core']) > 0)):
 
-                # FIXME: The following loop takes a long time
                 for var in cloudlet_items:
-                    cloudlet[var] = cloudlets['%s/%s' % (i, var)][...]
+                    cloudlet[var] = cloudlets['%d/%s' % (i, var)][...]
                 result.append( Cloudlet( n, t, cloudlet, MC ) )
-                n = n + 1
+                n += 1
 
     return result
 

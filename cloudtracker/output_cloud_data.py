@@ -13,11 +13,6 @@ from .utility_functions import zyx_to_index, index_to_zyx, calc_radii, \
 import sys, gc
 #import scipy.io
 
-from pympler import summary
-from pympler import muppy
-
-all_objects = muppy.get_objects()
-
 def calc_shell(index, MC):
     # Expand the cloud points outward
     maskindex = expand_indexes(index, MC)
@@ -36,6 +31,7 @@ def calc_edge(index, shellindex, MC):
 
     return edgeindex
 
+# FIXME: Memory leak here -- condensed, within calc_radii
 # @profile
 def calc_env(index, shellindex, edgeindex, MC):
     if len(shellindex) > 0:
@@ -142,7 +138,6 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
             for var in items:
                 cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
             clusters[key] = cluster
-            cluster = {}
 
     clouds = {}
     id = 0
@@ -189,19 +184,18 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
         noise_clust['plume'] = numpy.hstack(noise_clust['plume'])
 
     # Only save the noise if it contains cloud core
+    # NOTE: now directly saved into HDF5 dataset
     clouds[-1] = calculate_data(noise_clust, MC)
             
-    print("Number of Clouds at Current Timestep: ", len(clouds.keys()))
+    print("Number of Clouds at Current Timestep: ", len(clouds.keys()) + 1)
 
     items = ['core', 'condensed', 'plume', 'core_shell', 'condensed_shell', \
         'core_edge', 'condensed_edge', 'core_env', 'condensed_env']
     with h5py.File('hdf5/clouds_%08g.h5' % t, 'w') as f:
-        for i in clouds.keys():
-            grp = f.create_group(str(i))
-            for var in items:
-                dset = grp.create_dataset(var, data=clouds[i][var])
-    clusters.clear()
-    clouds.clear()
+        for id in clouds:
+            grp = f.create_group(str(id))
+            for point_type in clouds[id]:
+                dset = grp.create_dataset(point_type, data=clouds[id][point_type])
 
     # save_text_file(clouds, t, MC)
 
