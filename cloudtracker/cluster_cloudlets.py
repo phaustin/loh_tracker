@@ -349,10 +349,10 @@ def save_clusters(clusters, t):
         for id, clust in clusters.iteritems():
             grp = f.create_group(str(id))
 
-            dset = grp.create_dataset('past_connections', data=numpy.array(list(clust.past_connections)))
-            dset = grp.create_dataset('merge_connections', data=numpy.array(list(clust.merge_connections)))
-            dset = grp.create_dataset('split_connections', data=numpy.array(list(clust.split_connections)))
-            dset = grp.create_dataset('events', data=numpy.array(list(clust.events)))
+            dset = grp.create_dataset('past_connections', data=numpy.unique(clust.past_connections))
+            dset = grp.create_dataset('merge_connections', data=numpy.unique(clust.merge_connections))
+            dset = grp.create_dataset('split_connections', data=numpy.unique(clust.split_connections))
+            dset = grp.create_dataset('events', data=clust.events)
             dset = grp.create_dataset('core', data=clust.core_mask())
             dset = grp.create_dataset('condensed', data=clust.condensed_mask())
             dset = grp.create_dataset('plume', data=clust.plume_mask())

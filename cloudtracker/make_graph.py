@@ -5,6 +5,7 @@ import cPickle as pickle
 import h5py
 import gc
 import networkx
+import numpy
 
 full_output=False
 
@@ -89,7 +90,6 @@ def make_graph(MC):
                     for item in clusters[id]['past_connections']:
                         graph.add_edge('%08g|%08g' % (t-1, item),
                                        '%08g|%08g' % (t, int(id)))
-        gc.collect() # NOTE: Garbage collection
 
     # Iterate over every cloud in the graph
     for subgraph in networkx.connected_component_subgraphs(graph):
@@ -160,8 +160,6 @@ def make_graph(MC):
     cloud_graphs.reverse()
     cloud_graphs = [item[1] for item in cloud_graphs]
     
-    if full_output: full_output(cloud_times, cloud_graphs, merges, splits, MC)
+    #if full_output: full_output(cloud_times, cloud_graphs, merges, splits, MC)
 
     return cloud_graphs, cloud_noise
-
-

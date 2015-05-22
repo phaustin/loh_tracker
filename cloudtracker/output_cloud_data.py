@@ -31,8 +31,6 @@ def calc_edge(index, shellindex, MC):
 
     return edgeindex
 
-# FIXME: Memory leak here -- condensed, within calc_radii
-# @profile
 def calc_env(index, shellindex, edgeindex, MC):
     if len(shellindex) > 0:
         K_J_I = index_to_zyx(shellindex, MC)
@@ -67,7 +65,6 @@ def calc_env(index, shellindex, edgeindex, MC):
 
     return envindex
 
-# @profile # FIXME: Memory leak / infinite loop here
 def calculate_data(cluster, MC):
     result = {}
 
@@ -128,8 +125,10 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
     items = ['core', 'condensed', 'plume']
 
     with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
-        for id in cluster_dict:
-            key = "%08g|%08g" % (t, int(id))
+        keys = numpy.array(cluster_dict.keys(), dtype=int)
+        keys.sort()
+        for id in keys:
+            key = "%08g|%08g" % (t, id)
 
             #clusters[key] = dict(zip(items, numpy.array([cluster_dict['%s/%s' % (id, 'core')][...], \
             #    cluster_dict['%s/%s' % (id, 'condensed')][...], cluster_dict['%s/%s' % (id, 'plume')][...]])))

@@ -14,12 +14,12 @@ from .make_graph import make_graph
 from .output_cloud_data import output_cloud_data
 
 try:
-	from netCDF4 import Dataset
+    from netCDF4 import Dataset
 except:
-	try:
-		from netCDF3 import Dataset
-	except:
-		from pupynere import netcdf_file as Dataset
+    try:
+        from netCDF3 import Dataset
+    except:
+        from pupynere import netcdf_file as Dataset
 
 #-------------------
 
@@ -39,8 +39,8 @@ def load_data(filename):
 
 #---------------
 
-#@profile
 def main(MC, save_all=True):
+    sys.setrecursionlimit(100000)
     input_dir = MC['input_directory']
     nx = MC['nx']
     ny = MC['ny']
@@ -56,11 +56,8 @@ def main(MC, save_all=True):
     #if (len(filelist) != nt):
     #    raise Exception("Only %d files found, nt=%d files expected" % (len(filelist), nt))
 
-    if not os.path.exists('pkl'):
-        os.mkdir('pkl')
     if not os.path.exists('output'):
         os.mkdir('output')
-    # TEST: Data folder for testing
     if not os.path.exists('hdf5'):
         os.mkdir('hdf5')
 
@@ -71,7 +68,6 @@ def main(MC, save_all=True):
 
         cloudlets = generate_cloudlets(core, condensed, plume, u, v, w, MC)
         
-        # NOTE: cloudlet save/load works properly
         # TEST: linear calls instead of for lodop to speed this up?
         with h5py.File('hdf5/cloudlets_%08g.h5' % n, "w") as f:
             for i in range(len(cloudlets)):
@@ -81,13 +77,11 @@ def main(MC, save_all=True):
                         dset = grp.create_dataset(var, data=cloudlets[i][var][...])
                     else:
                         deset = grp.create_dataset(var, data=cloudlets[i][var])
-
-        gc.collect() # NOTE: Force garbage-collection at the end of loop
     
 #----cluster----
+
     print("Making clusters")
 
-    # FIXME: cluster save/load does not work properly
     cluster_cloudlets(MC)
 
 #----graph----
@@ -110,9 +104,5 @@ def main(MC, save_all=True):
     # TODO: Parallelize file output (multiprocessing)
     for n in range(nt):
         print("output cloud data, time step: %d" % n)
-
         output_cloud_data(cloud_graphs, cloud_noise, n, MC)
-        #n = gc.collect() # Note: Garbage collection
-        #print sys.getallocatedblocks(), " blocks allocated"
-        # print("Unreacheable objects: ", n)
             

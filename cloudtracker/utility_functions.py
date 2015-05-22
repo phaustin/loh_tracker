@@ -102,7 +102,6 @@ def calc_radii(data, reference, MC):
         m = k_data.shape[1]
         n = k_ref.shape[1]
         
-       
         k_data = k_data[:, :, numpy.newaxis] * numpy.ones((3, m, n))
         k_ref = k_ref[:, numpy.newaxis, :] * numpy.ones((3, m, n))
         
