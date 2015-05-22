@@ -130,13 +130,13 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
         for id in keys:
             key = "%08g|%08g" % (t, id)
 
-            #clusters[key] = dict(zip(items, numpy.array([cluster_dict['%s/%s' % (id, 'core')][...], \
-            #    cluster_dict['%s/%s' % (id, 'condensed')][...], cluster_dict['%s/%s' % (id, 'plume')][...]])))
+            clusters[key] = dict(zip(items, numpy.array([cluster_dict['%s/%s' % (id, 'core')][...], \
+                cluster_dict['%s/%s' % (id, 'condensed')][...], cluster_dict['%s/%s' % (id, 'plume')][...]])))
 
             # TEST: ensure the above clusters dict is the same
-            for var in items:
-                cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
-            clusters[key] = cluster
+            #for var in items:
+            #    cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
+            #clusters[key] = cluster
 
     clouds = {}
     id = 0

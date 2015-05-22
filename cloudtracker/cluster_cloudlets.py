@@ -349,13 +349,13 @@ def save_clusters(clusters, t):
         for id, clust in clusters.iteritems():
             grp = f.create_group(str(id))
 
-            dset = grp.create_dataset('past_connections', data=numpy.unique(clust.past_connections))
-            dset = grp.create_dataset('merge_connections', data=numpy.unique(clust.merge_connections))
-            dset = grp.create_dataset('split_connections', data=numpy.unique(clust.split_connections))
-            dset = grp.create_dataset('events', data=clust.events)
-            dset = grp.create_dataset('core', data=clust.core_mask())
-            dset = grp.create_dataset('condensed', data=clust.condensed_mask())
-            dset = grp.create_dataset('plume', data=clust.plume_mask())
+            grp.create_dataset('past_connections', data=numpy.unique(clust.past_connections))
+            grp.create_dataset('merge_connections', data=numpy.unique(clust.merge_connections))
+            grp.create_dataset('split_connections', data=numpy.unique(clust.split_connections))
+            grp.create_dataset('events', data=clust.events)
+            grp.create_dataset('core', data=clust.core_mask())
+            grp.create_dataset('condensed', data=clust.condensed_mask())
+            grp.create_dataset('plume', data=clust.plume_mask())
     # NOTE: Ignore cluster_objects
     #cPickle.dump(clusters, open('pkl/cluster_objects_%08g.pkl' % t, 'wb'))
 
