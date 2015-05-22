@@ -3,6 +3,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+import cPickle
 import numpy
 import glob
 import sys, os, gc
@@ -40,7 +41,7 @@ def load_data(filename):
 #---------------
 
 def main(MC, save_all=True):
-    sys.setrecursionlimit(100000)
+    sys.setrecursionlimit(10000)
     input_dir = MC['input_directory']
     nx = MC['nx']
     ny = MC['ny']
@@ -89,15 +90,11 @@ def main(MC, save_all=True):
     print("make graph")
 
     cloud_graphs, cloud_noise = make_graph(MC)
+    #(cloud_graphs, cloud_noise) = cPickle.load(open('pkl/graph_data.pkl', 'r'))
     
     print("\tFound %d clouds" % len(cloud_graphs))
 
-    # if save_all:
-    #     FIXME: Object dtype dtype('object') has no native HDF5 equivalent
-    #     with h5py.File('hdf5/graph_data.h5', 'w') as f:
-    #         dset = f.create_dataset('cloud_graphs', data=cloud_graphs)
-    #         dset = f.create_dataset('cloud_noise', data=cloud_noise)
-    #     #cPickle.dump((cloud_graphs, cloud_noise), open('pkl/graph_data.pkl', 'wb'))
+    #cPickle.dump((cloud_graphs, cloud_noise), open('pkl/graph_data.pkl', 'wb'))
             
 #----output----
 
