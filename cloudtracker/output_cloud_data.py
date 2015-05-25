@@ -111,7 +111,6 @@ def save_text_file(clouds, t, MC):
             recarray['z'][count:n + count] = z
             count = count + n
             
-    # TODO(loh): Dump HDF5 instead
     recarray.tofile(open('output/clouds_at_time_%08g.txt' % t, 'w'), '\r\n')
 
 # @profile
@@ -132,11 +131,6 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
 
             clusters[key] = dict(zip(items, numpy.array([cluster_dict['%s/%s' % (id, 'core')][...], \
                 cluster_dict['%s/%s' % (id, 'condensed')][...], cluster_dict['%s/%s' % (id, 'plume')][...]])))
-
-            # TEST: ensure the above clusters dict is the same
-            #for var in items:
-            #    cluster[var] = cluster_dict['%s/%s' % (id, var)][...]
-            #clusters[key] = cluster
 
     clouds = {}
     id = 0
@@ -183,7 +177,6 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
         noise_clust['plume'] = numpy.hstack(noise_clust['plume'])
 
     # Only save the noise if it contains cloud core
-    # NOTE: now directly saved into HDF5 dataset
     clouds[-1] = calculate_data(noise_clust, MC)
             
     print("Number of Clouds at Current Timestep: ", len(clouds.keys()) + 1)
