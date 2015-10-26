@@ -28,11 +28,11 @@ def wrapper(module_name, script_name, function_name, filelist):
 	
 def run_cloudtracker():
 	# Change the working directory for cloudtracker
-	os.chdir('%s/cloudtracker/' % (cwd))
+	#os.chdir('%s/cloudtracker/' % (cwd))
 	model_config = mc.model_config
 	
 	model_config['nt'] = len(glob.glob('%s/tracking/*.nc' % (mc.data_directory)))
-	
+    
 	# Swap input directory for cloudtracker 
 	model_config['input_directory'] = mc.data_directory + '/tracking'
 	cloudtracker.main.main(model_config) 
