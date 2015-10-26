@@ -13,7 +13,7 @@ from .utility_functions import index_to_zyx, zyx_to_index
 saveit = True
 
 #--------------------------
-@profile
+#@profile
 def make_spatial_cloudlet_connections(cloudlets, MC):
     # Find all the cloudlets which have adjacent cores or plumes
     # Store the information in the cloudlet.adjacent dict.
@@ -82,7 +82,7 @@ def count_overlaps(key, overlaps, cloudlet):
     bin_count = bin_count[bin_count > 0]
     for n, index in enumerate(indexes):
         cloudlet.overlap[key].append( (bin_count[n],  index) )
-@profile
+#@profile
 def make_temporal_connections(cloudlets, old_clusters, MC):
     # For each cloudlet, find the previous time's
     # cluster that overlaps the cloudlet the most
@@ -142,7 +142,7 @@ def make_temporal_connections(cloudlets, old_clusters, MC):
             cloudlet.overlap[item].reverse()
             
 #---------------------
-@profile
+#@profile
 def create_new_clusters(cloudlets, clusters, max_id, MC):
 
     core_list = []
@@ -198,7 +198,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
     return clusters
 
 #---------------------
-@profile
+#@profile
 def associate_cloudlets_with_previous_clusters(cloudlets, old_clusters, MC):
     clusters = {}
     new_cloudlets = []
@@ -293,7 +293,7 @@ def split_clusters(clusters, max_id, MC):
     return max_id
                 
 #----------
-@profile
+#@profile
 def make_clusters(cloudlets, old_clusters, MC):
     # make_clusters generates a dictionary of clusters
 
@@ -358,7 +358,7 @@ def save_clusters(clusters, t):
             grp.create_dataset('plume', data=clust.plume_mask())
     # NOTE: Ignore cluster_objects
     #cPickle.dump(clusters, open('pkl/cluster_objects_%08g.pkl' % t, 'wb'))
-@profile
+#@profile
 def cluster_cloudlets(MC):
 
     print("cluster cloudlets; time step: 0")
