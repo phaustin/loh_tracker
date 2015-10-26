@@ -15,7 +15,7 @@ def zyx_to_index(z, y, x, MC):
     return ny*nx*z + nx*y + x
 
 #---------------------------------
-@profile
+#@profile
 def expand_indexes(indexes, MC):
     # Expand a given set of indexes to include the nearest
     # neighbour points in all directions.
@@ -50,7 +50,7 @@ def expand_indexes(indexes, MC):
     return expanded_index
 
 #---------------------------
-@profile
+#@profile
 def find_halo(indexes, MC):
     # Expand the set of core points to include the nearest 
     # neighbour points in all directions.
@@ -82,7 +82,7 @@ def calc_distance(point1, point2, MC):
     return numpy.sqrt(delta_x**2 + delta_y**2 + delta_z**2)
                                         
 #---------------------------
-@profile
+#@profile
 def calc_radii(data, reference, MC):
     ny, nx = MC['ny'], MC['nx']
     data_points = index_to_zyx(data, MC)
