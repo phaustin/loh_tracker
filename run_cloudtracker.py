@@ -31,14 +31,11 @@ def run_cloudtracker():
 	#os.chdir('%s/cloudtracker/' % (cwd))
 	model_config = mc.model_config
 	
-	model_config['nt'] = len(glob.glob('%s/tracking/*.nc' % (mc.data_directory)))
-    
 	# Swap input directory for cloudtracker 
-	model_config['input_directory'] = mc.data_directory + '/tracking'
 	cloudtracker.main.main(model_config) 
 
 if __name__ == '__main__':
 	run_cloudtracker()
 	
-	print 'Entrainment analysis completed'
+	print("Entrainment analysis completed")
 	

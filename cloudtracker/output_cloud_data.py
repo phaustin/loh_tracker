@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # Runtime (690, 130, 128, 128): 1 hour 20 minutes
 
-from __future__ import print_function
-from __future__ import absolute_import
-
 import pickle
 import h5py
 import networkx

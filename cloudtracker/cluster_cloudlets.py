@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # Runtime (690, 130, 128, 128): 1.5 hours
 
-from __future__ import print_function
-from __future__ import absolute_import
-
 import numpy
 import h5py
 
