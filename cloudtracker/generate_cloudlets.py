@@ -222,7 +222,7 @@ def load_data(ds):
 
 # @profile
 def generate_cloudlets(MC):
-    ds = xray.open_mfdataset('data/tracking2/*.nc', \
+    ds = xray.open_mfdataset(("/*.nc") % MC.input_directory, \
         chunks={'x': 200, 'y': 200, 'z':200}, concat_dim="time")
 
     core, condensed, plume, u, v, w = load_data(ds.isel(time=0))
