@@ -1,39 +1,60 @@
 import numpy as np
 
-from numba import jit
+import numba
 
 #---------------------------------
 
-def index_to_zyx(index, MC):
-    ny, nx = MC['ny'], MC['nx']
+@numba.jit(nopython=True)
+def index_to_zyx(index, nx, ny, nz):
     z = index // (ny*nx)
     index = index % (ny*nx)
     y = index // nx
     x = index % nx
-    return np.array((z, y, x))
+    return (z, y, x)
 
-def zyx_to_index(z, y, x, MC):
-    ny, nx = MC['ny'], MC['nx']
-    return ny*nx*z + nx*y + x
+@numba.jit(nopython=True)
+def zyx_to_index(z, y, x, nx, ny, nz):
+    return (ny*nx*z + nx*y + x)
 
 #---------------------------------
 
-# @jit(nopython=True)
-def expand_indexes(indexes, MC):
+@numba.jit
+def jit_expand(K_J_I):
+    neighbour_cells = [ [-1, 0, 0], [1, 0, 0], 
+                        [0, -1, 0], [0, 1, 0], 
+                        [0, 0, -1], [0, 0, 1] ]
+    z_expand = []
+    y_expand = []
+    x_expand = []
+    for item in neighbour_cells:
+        # List comprehension not supported in non-python mode (yet)
+        # z_expand += [z + item[0] for z in K_J_I[0]]
+        # y_expand += [y + item[1] for y in K_J_I[1]]
+        # x_expand += [x + item[2] for x in K_J_I[2]]
+
+        for i in range(len(K_J_I[0])):
+            z_expand += [item[0] + K_J_I[0][i]]
+            y_expand += [item[1] + K_J_I[1][i]]
+            x_expand += [item[2] + K_J_I[2][i]]
+    return [z_expand, y_expand, x_expand]
+
+# @numba.jit
+@profile
+def expand_indexes(indexes, nx, ny, nz):
     # Expand a given set of indexes to include the nearest
     # neighbour points in all directions.
     # indexes is an array of grid indexes
-    
-    nz, ny, nx = MC['nz'], MC['ny'], MC['nx']
-                    
-    K_J_I = index_to_zyx( indexes, MC )
+    # expanded_index = np.array(jit_expand(index_to_zyx(indexes, nx, ny, nz)))
+
+    K_J_I = index_to_zyx( indexes, nx, ny, nz )
 
     stack_list = [K_J_I, ]
-    for item in ((-1, 0, 0), (1, 0, 0),
-                 (0, -1, 0), (0, 1, 0), 
-                 (0, 0, -1), (0, 0, 1)):
-        stack_list.append( K_J_I + np.array(item)[:, np.newaxis] )
-    
+    nearest = np.array([[[-1], [0], [0]], [[1], [0], [0]],
+                 [[0], [-1], [0]], [[0], [1], [0]], 
+                 [[0], [0], [-1]], [[0], [0], [1]]])
+    for item in nearest:
+        stack_list.append(K_J_I + item)
+        
     expanded_index = np.hstack(stack_list)
 
     # re-entrant domain
@@ -46,11 +67,9 @@ def expand_indexes(indexes, MC):
     expanded_index = zyx_to_index(expanded_index[0, :],
                                   expanded_index[1, :],
                                   expanded_index[2, :],
-                                  MC)
+                                  nx, ny, nz)
 
-    expanded_index = np.unique(expanded_index).astype(np.int)
-
-    return expanded_index
+    return list(set(expanded_index))
 
 #---------------------------
 
