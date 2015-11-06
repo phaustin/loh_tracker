@@ -6,7 +6,7 @@ To run the cloud-tracking algorithm, use
 
     python run_tracker.py [Input_dir]
 
-replace [Input_dir] with the address of the input directory where the tracking data files are located (relative addresses work well with the argument).
+replace [Input_dir] with the address of the input directory with the tracking data.
 
 ## Profiling ##
 To profile the cloud-tracking algorithm using line_profiler, do
