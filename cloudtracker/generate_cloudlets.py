@@ -227,7 +227,7 @@ def load_data(ds):
 
 # @profile
 def generate_cloudlets(MC):
-    ds = xray.open_mfdataset((MC['input_directory']), concat_dim="time",
+    ds = xray.open_mfdataset(((MC['input_directory'] + "/*.nc")), concat_dim="time",
         chunks=1000)
 
     for i in range(len(ds.time)):
