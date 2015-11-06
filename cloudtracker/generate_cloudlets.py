@@ -25,7 +25,7 @@ from .utility_functions import index_to_zyx, expand_indexes
 
 #-------------------
 
-@profile
+# @profile
 def expand_cloudlet(cloudlet, indexes, MC):
     """Given an array of indexes composing a cloudlet and a boolean mask 
     array indicating if each model index may be expanded into (True) or 
@@ -37,7 +37,7 @@ def expand_cloudlet(cloudlet, indexes, MC):
     """
 
     # Expand the cloudlet indexes into their nearest neighbours
-    expanded_cloudlet = np.array(expand_indexes(cloudlet, MC['nx'], MC['ny'], MC['nz']))
+    expanded_cloudlet = np.array(expand_indexes(cloudlet, MC['nz'], MC['ny'], MC['nx']))
 
     # Find the mask values of the expanded indexes
     mask = indexes[expanded_cloudlet]
@@ -82,6 +82,7 @@ def expand_current_cloudlets(key, cloudlets, mask, MC):
 
 #---------------------
 
+# @profile
 def make_new_cloudlets(key, mask, MC):
     indexes = np.arange(MC['nx']*MC['ny']*MC['nz'])[mask]
     cloudlets = []
@@ -110,22 +111,21 @@ def make_new_cloudlets(key, mask, MC):
 
 #-----------------
 
-@numba.jit(nopython=True)
-def calculate_mean_cloudlet_velocity(cloudlet_velocity):
-    return cloudlet_velocity.mean()
-
-@profile
+# @profile
 def find_mean_cloudlet_velocity(cloudlets, 
                                 u, v, w, 
                                 MC):
     # TODO: get mean velocities directly from model values
     dx, dy, dz, dt = MC['dx'], MC['dy'], MC['dz'], MC['dt']                                
     ug, vg = MC['ug'], MC['vg']
+
+    u, v, w = u.values, v.values, u.values
+    # TODO: async operation for each cloudlet in cloudlets
     for cloudlet in cloudlets:
         if len(cloudlet['condensed']) > 0:
-            K, J, I = index_to_zyx( cloudlet['condensed'], MC['nx'], MC['ny'], MC['nz'] )
+            K, J, I = index_to_zyx( cloudlet['condensed'], MC['nz'], MC['ny'], MC['nx'] )
             # find the mean motion of the cloudlet
-            u_mean = np.mean(u[K, J, I])-ug
+            u_mean = u[K, J, I].mean()-ug
             v_mean = v[K, J, I].mean()-vg
             w_mean = w[K, J, I].mean()
         
@@ -138,7 +138,7 @@ def find_mean_cloudlet_velocity(cloudlets,
             cloudlet['w_condensed'] = 0.
 
 
-        K, J, I = index_to_zyx( cloudlet['plume'], MC['nx'], MC['ny'], MC['nz'] )
+        K, J, I = index_to_zyx( cloudlet['plume'], MC['nz'], MC['ny'], MC['nx'] )
         # find the mean motion of the cloudlet
         u_mean = u[K, J, I].mean()-ug
         v_mean = v[K, J, I].mean()-vg
@@ -152,7 +152,7 @@ def find_mean_cloudlet_velocity(cloudlets,
 
 #----------------------------
 
-@profile
+# @profile
 def find_cloudlets(core, condensed, plume, u, v, w, MC): 
     # find the indexes of all the core and plume points
     core = np.ravel(core)
@@ -169,7 +169,7 @@ def find_cloudlets(core, condensed, plume, u, v, w, MC):
         cloudlet['condensed'] = cloudlet['core'][:]
             
     ncore = len(cloudlets)
-    print("\t%d core cloudlets" % ncore) 
+    print(" \t%d core cloudlets" % ncore) 
 
     cloudlets, condensed = expand_current_cloudlets('condensed', 
                                                     cloudlets,
@@ -188,7 +188,7 @@ def find_cloudlets(core, condensed, plume, u, v, w, MC):
         cloudlet['plume'] = cloudlet['condensed'][:]
 
     ncondensed = len(cloudlets)
-    print("\t%d condensed cloudlets" % (ncondensed-ncore))
+    print(" \t%d condensed cloudlets" % (ncondensed-ncore))
 
 
     cloudlets, plume = expand_current_cloudlets('plume', 
@@ -207,7 +207,7 @@ def find_cloudlets(core, condensed, plume, u, v, w, MC):
 
     nplume = len(cloudlets)
     
-    print("\t%d plume cloudlets" % (nplume-ncondensed))
+    print(" \t%d plume cloudlets" % (nplume-ncondensed))
 
     cloudlets = find_mean_cloudlet_velocity(cloudlets, 
                                             u, v, w,
@@ -222,12 +222,13 @@ def load_data(ds):
     u = ds.variables['u'][:].astype(np.float)
     v = ds.variables['v'][:].astype(np.float)
     w = ds.variables['w'][:].astype(np.float)
-    
+
     return core, condensed, plume, u, v, w
 
-@profile
+# @profile
 def generate_cloudlets(MC):
-    ds = xray.open_mfdataset(("data/tracking2/*.nc"), concat_dim="time")
+    ds = xray.open_mfdataset((MC['input_directory']), concat_dim="time",
+        chunks=1000)
 
     for i in range(len(ds.time)):
         core, condensed, plume, u, v, w = load_data(ds.isel(time=i))

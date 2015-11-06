@@ -12,7 +12,7 @@ def run_tracker(input_dir):
     model_config['input_directory'] = input_dir
     main.main(model_config)
 
-    print( " Entrainment analysis completed " )
+    print( "\n Entrainment analysis completed " )
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
