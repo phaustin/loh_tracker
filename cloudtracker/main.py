@@ -19,23 +19,23 @@ def main(MC, save_all=True):
     # TODO: command line input for data directory
 
 #----cloudlets----
-    print("gathering cloudlets")
+    print( " Gathering cloudlets... " )
 
     generate_cloudlets(MC)
     return
 #----cluster----
 
-    print("making clusters")
+    print( " Creating clusters... " )
 
     cluster_cloudlets(MC)
 
 #----graph----
 
-    print("make graph")
+    print( " Make graph... " )
     
     cloud_graphs, cloud_noise = make_graph(MC)
     
-    print("\tFound %d clouds" % len(cloud_graphs))
+    print( "\tFound %d clouds" % len(cloud_graphs))
     
     # if save_all:
     #     FIXME: Object dtype dtype('object') has no native HDF5 equivalent
@@ -48,6 +48,6 @@ def main(MC, save_all=True):
     
     # TODO: Parallelize file output (multiprocessing)
     for n in range(nt):
-        print("output cloud data, time step: %d" % n)
+        print(" Outputting cloud data, time step: %d" % n)
         output_cloud_data(cloud_graphs, cloud_noise, n, MC)
             
