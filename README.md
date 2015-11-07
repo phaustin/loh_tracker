@@ -9,6 +9,8 @@ To run the cloud-tracking algorithm, use
 where [Input_dir] is the address of the input directory with the tracking data.
 
 ## Current Status ##
+
+### Main ###
 - [ ] Make run_tracker.py run with command arg
 - [ ] Get rid of config.cfg 
 - [ ] Read model parameters from xray dataset
