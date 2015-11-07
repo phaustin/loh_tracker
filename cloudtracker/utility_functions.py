@@ -38,7 +38,8 @@ def jit_expand(K_J_I):
             x_expand += [item[2] + K_J_I[2][i]]
     return [z_expand, y_expand, x_expand]
 
-@numba.jit(nopython=True)
+# FIXME: make nearest into a 1D array and run Numba
+# @numba.jit(nopython=True)
 def expand_generator(nearest, z, y, x):
     for i in nearest:
         z_exp = z + i[2]

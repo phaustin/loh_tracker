@@ -21,6 +21,8 @@ import numba
 from netCDF4 import Dataset as nc
 import xray, dask, h5py
 
+from dask import distributed
+
 from .utility_functions import index_to_zyx, expand_indexes
 
 #-------------------
