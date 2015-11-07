@@ -1,12 +1,25 @@
 [Cloud-tracker](https://github.com/lorenghoh/cloud-tracker "cloud-tracker")
 ==============
 
-### Updated cloud-tracking algorithm for SAM ###
+# Updated cloud-tracking algorithm for SAM #
 To run the cloud-tracking algorithm, use 
 
     python run_tracker.py [Input_dir]
 
-replace [Input_dir] with the address of the input directory with the tracking data.
+where [Input_dir] is the address of the input directory with the tracking data.
+
+## Current Status ##
+- [ ] Make run_tracker.py run with command arg
+- [ ] Get rid of config.cfg 
+- [ ] Read model parameters from xray dataset
+
+### Generate cloudlets ###
+- [ ] Implement/benchmark asyncio operations on ~ 30,000 cloudlet computations
+- [ ] Numba/Cython for the expansion algorithm (cloudtracker.utility_functions)
+
+### Cluster cloudlets ###
+
+### Output cloud data ###
 
 ## Profiling ##
 To profile the cloud-tracking algorithm using line_profiler, do
