@@ -47,6 +47,7 @@ def expand_generator(nearest, z, y, x):
         x_exp = x + i[0]
         yield (x_exp, y_exp, z_exp)
 
+# TODO (LOH): Parallelize 
 # @numba.jit
 # @profile
 def expand_indexes(indexes, nz, ny, nx):

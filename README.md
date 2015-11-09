@@ -18,6 +18,7 @@ where [Input_dir] is the address of the input directory with the tracking data.
 ### Generate cloudlets ###
 - [ ] Implement/benchmark asyncio operations on ~ 30,000 cloudlet computations
 - [ ] Numba/Cython for the expansion algorithm (cloudtracker.utility_functions)
+- [ ] Wrap up with dask -> HDF5 output
 
 ### Cluster cloudlets ###
 
