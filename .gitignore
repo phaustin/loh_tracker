@@ -3,6 +3,7 @@
 *.h5
 *.pbs
 *.lprof
+*.txt
 
 /data
 
