@@ -1,10 +1,11 @@
 import numpy as np
 
-import numba, code
+import numba
+from numba import int64
 
 #---------------------------------
 
-@numba.jit(nopython=True)
+@numba.jit((int64[:], int64, int64, int64), nopython=True)
 def index_to_zyx(index, nz, ny, nx):
     z = index // (ny*nx)
     index = index % (ny*nx)
@@ -12,7 +13,8 @@ def index_to_zyx(index, nz, ny, nx):
     x = index % nx
     return (z, y, x)
 
-@numba.jit(nopython=True)
+@numba.jit(int64[:](int64[:], int64[:], int64[:], \
+    int64, int64, int64), nopython=True)
 def zyx_to_index(z, y, x, nz, ny, nx):
     return (ny*nx*z + nx*y + x)
 
@@ -47,8 +49,9 @@ def expand_generator(nearest, z, y, x):
         x_exp = x + i[0]
         yield (x_exp, y_exp, z_exp)
 
-# TODO (LOH): Parallelize 
-# @numba.jit
+# TODO (LOH): Parallelize
+# FIXME: Bottleneck -- 90% of runtime is spent here 
+# @numba.jit(nopython=True)
 # @profile
 def expand_indexes(indexes, nz, ny, nx):
     # Expand a given set of indexes to include the nearest
