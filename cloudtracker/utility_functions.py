@@ -1,6 +1,6 @@
 import numpy as np
 
-import numba
+import numba, code
 from numba import int64
 
 #---------------------------------
@@ -20,39 +20,16 @@ def zyx_to_index(z, y, x, nz, ny, nx):
 
 #---------------------------------
 
+@numba.jit((int64, int64, int64, int64[:], int64[:, :], \
+    int64, int64, int64), nopython=True)
+def jit_expand(z, y, x, nearest, expanded_cell, nz, ny, nx):
+    for index_3 in range(7): 
+        expanded_cell[0][index_3] = (z + nearest[index_3 + 0]) % nz
+        expanded_cell[1][index_3] = (y + nearest[index_3 + 1]) % ny
+        expanded_cell[2][index_3] = (x + nearest[index_3 + 2]) % nx
+    return expanded_cell
+
 @numba.jit
-def jit_expand(K_J_I):
-    neighbour_cells = [ [-1, 0, 0], [1, 0, 0], 
-                        [0, -1, 0], [0, 1, 0], 
-                        [0, 0, -1], [0, 0, 1] ]
-    z_expand = []
-    y_expand = []
-    x_expand = []
-    for item in neighbour_cells:
-        # List comprehension not supported in non-python mode (yet)
-        # z_expand += [z + item[0] for z in K_J_I[0]]
-        # y_expand += [y + item[1] for y in K_J_I[1]]
-        # x_expand += [x + item[2] for x in K_J_I[2]]
-
-        for i in range(len(K_J_I[0])):
-            z_expand += [item[0] + K_J_I[0][i]]
-            y_expand += [item[1] + K_J_I[1][i]]
-            x_expand += [item[2] + K_J_I[2][i]]
-    return [z_expand, y_expand, x_expand]
-
-# FIXME: make nearest into a 1D array and run Numba
-# @numba.jit(nopython=True)
-def expand_generator(nearest, z, y, x):
-    for i in nearest:
-        z_exp = z + i[2]
-        y_exp = y + i[1]
-        x_exp = x + i[0]
-        yield (x_exp, y_exp, z_exp)
-
-# TODO (LOH): Parallelize
-# FIXME: Bottleneck -- 90% of runtime is spent here 
-# @numba.jit(nopython=True)
-# @profile
 def expand_indexes(indexes, nz, ny, nx):
     # Expand a given set of indexes to include the nearest
     # neighbour points in all directions.
@@ -60,40 +37,34 @@ def expand_indexes(indexes, nz, ny, nx):
     # expanded_index = np.array(jit_expand(index_to_zyx(indexes, nz, ny, nx)))
 
     K_J_I = index_to_zyx( indexes, nz, ny, nx )
-    # expanded_length = (len(indexes) * 6 + len(indexes))
-    # expanded_index = np.zeros((3, expanded_length), dtype=np.int)
 
-    # nearest = np.array([ [-1, 0, 0], [1, 0, 0], 
-    #             [0, -1, 0], [0, 1, 0], 
-    #             [0, 0, -1], [0, 0, 1] ])
+    expanded_length = (len(indexes) * 6 + len(indexes))
+    expanded_index = np.zeros((3, expanded_length), dtype=np.int64)
 
-    # exp_i = 0
-    # for item in range(len(indexes)):
-    #     stack_list = ((K_J_I[0][item], K_J_I[1][item], K_J_I[2][item]))
-    #     expanded_index[:, exp_i] = stack_list
-    #     exp_i += 1
+    # 1 seed cell + 6 nearest cells
+    expanded_cell = np.zeros((3, 7), dtype=np.int64)
+    nearest = np.array( [0, 0, 0, -1, 0, 0, 1, 0, 0, 
+               0, -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1] )
+    for i in range(len(indexes)):
+        jit_expand(K_J_I[0][i], K_J_I[1][i], K_J_I[2][i], \
+            nearest, expanded_cell, nz, ny, nx)
+        expanded_index[:, i*7:i*7+7] = expanded_cell
 
-    #     for index in expand_generator(nearest, stack_list[2], stack_list[1], stack_list[0]):
-    #         # expanded_index[2][exp_i] = index[2]
-    #         # expanded_index[1][exp_i] = index[1]
-    #         # expanded_index[0][exp_i] = index[0]
-    #         expanded_index[:, exp_i] = index
-    #         exp_i += 1
-
-    stack_list = [K_J_I, ]
-    nearest = np.array([[[-1], [0], [0]], [[1], [0], [0]],
-                 [[0], [-1], [0]], [[0], [1], [0]], 
-                 [[0], [0], [-1]], [[0], [0], [1]]])
-    for item in nearest:
-        stack_list.append(K_J_I + item)
+    # ## Original
+    # stack_list = [K_J_I, ]
+    # nearest = np.array([[[-1], [0], [0]], [[1], [0], [0]],
+    #              [[0], [-1], [0]], [[0], [1], [0]], 
+    #              [[0], [0], [-1]], [[0], [0], [1]]])
+    # for item in nearest:
+    #     stack_list.append(K_J_I + item)
         
-    expanded_index = np.hstack(stack_list)
+    # expanded_index2 = np.hstack(stack_list)
 
     # re-entrant domain
-    expanded_index[0, expanded_index[0, :] == nz] = nz-1
-    expanded_index[0, expanded_index[0, :] < 0] = 0
-    expanded_index[1, :] = expanded_index[1, :]%ny
-    expanded_index[2, :] = expanded_index[2, :]%nx
+    # expanded_index[0, expanded_index[0, :] == nz] = nz-1
+    # expanded_index[0, expanded_index[0, :] < 0] = 0
+    # expanded_index[1, :] = expanded_index[1, :]%ny
+    # expanded_index[2, :] = expanded_index[2, :]%nx
 
     # convert back to indexes
     expanded_index = zyx_to_index(expanded_index[0, :],
