@@ -2,11 +2,13 @@
 ==============
 
 # Updated cloud-tracking algorithm for SAM #
-To run the cloud-tracking algorithm, use 
+ To run the cloud-tracking algorithm, use 
 
     python run_tracker.py [Input_dir]
 
-where [Input_dir] is the address of the input directory with the tracking data.
+where [Input_dir] is the address of the input directory. 
+
+ If no [Input_dir] is given, the scripy will try to find a folder named "data" in the current directory that contains the netCDF4 tracking files. Other model parameters will be automatically retrieved from the given files. 
 
 ## Current Status ##
 
@@ -14,6 +16,7 @@ where [Input_dir] is the address of the input directory with the tracking data.
 - [x] Make run_tracker.py run with command arg
 - [ ] Get rid of config.cfg 
 - [ ] Read model parameters from xray dataset
+- [ ] Write model parameters to HDF5 dataset
 
 ### Generate cloudlets ###
 - [x] Implement/benchmark asyncio operations on ~ 30,000 cloudlet computations
@@ -25,7 +28,7 @@ where [Input_dir] is the address of the input directory with the tracking data.
 ### Output cloud data ###
 
 ## Profiling ##
-To profile the cloud-tracking algorithm using line_profiler, do
+ To profile the cloud-tracking algorithm using line_profiler, do
 	
 	python -O -B -m kernprof -l -v run_tracker.py > line_stats.txt
 
