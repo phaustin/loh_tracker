@@ -21,13 +21,11 @@ import numba
 from netCDF4 import Dataset as nc
 import xray, dask, h5py
 
-from dask import distributed
-
 from .utility_functions import index_to_zyx, expand_indexes
 
 #-------------------
 
-# @profile
+@profile
 def expand_cloudlet(cloudlet, indexes, MC):
     """Given an array of indexes composing a cloudlet and a boolean mask 
     array indicating if each model index may be expanded into (True) or 
@@ -39,7 +37,7 @@ def expand_cloudlet(cloudlet, indexes, MC):
     """
 
     # Expand the cloudlet indexes into their nearest neighbours
-    expanded_cloudlet = np.array(expand_indexes(cloudlet, MC['nz'], MC['ny'], MC['nx']))
+    expanded_cloudlet = expand_indexes(cloudlet, MC['nz'], MC['ny'], MC['nx'])
 
     # Find the mask values of the expanded indexes
     mask = indexes[expanded_cloudlet]
@@ -54,6 +52,7 @@ def expand_cloudlet(cloudlet, indexes, MC):
 
 #---------------------
 
+@profile
 def expand_current_cloudlets(key, cloudlets, mask, MC):
 
     cloudlet_points = []
@@ -84,7 +83,7 @@ def expand_current_cloudlets(key, cloudlets, mask, MC):
 
 #---------------------
 
-# @profile
+@profile
 def make_new_cloudlets(key, mask, MC):
     indexes = np.arange(MC['nx']*MC['ny']*MC['nz'])[mask]
     cloudlets = []
@@ -114,7 +113,7 @@ def make_new_cloudlets(key, mask, MC):
 #-----------------
 
 # TODO (LOH): Parallelize 
-# @profile
+@profile
 def find_mean_cloudlet_velocity(cloudlets, 
                                 u, v, w, 
                                 MC):
@@ -123,7 +122,6 @@ def find_mean_cloudlet_velocity(cloudlets,
     ug, vg = MC['ug'], MC['vg']
 
     u, v, w = u.values, v.values, u.values
-    # TODO: async operation for each cloudlet in cloudlets
     for cloudlet in cloudlets:
         if len(cloudlet['condensed']) > 0:
             K, J, I = index_to_zyx( cloudlet['condensed'], MC['nz'], MC['ny'], MC['nx'] )
@@ -155,7 +153,7 @@ def find_mean_cloudlet_velocity(cloudlets,
 
 #----------------------------
 
-# @profile
+@profile
 def find_cloudlets(core, condensed, plume, u, v, w, MC): 
     # find the indexes of all the core and plume points
     core = np.ravel(core)
@@ -212,6 +210,7 @@ def find_cloudlets(core, condensed, plume, u, v, w, MC):
     
     print(" \t%d plume cloudlets" % (nplume-ncondensed))
 
+    # TODO: parallelize
     cloudlets = find_mean_cloudlet_velocity(cloudlets, 
                                             u, v, w,
                                             MC)
@@ -228,10 +227,10 @@ def load_data(ds):
 
     return core, condensed, plume, u, v, w
 
-# @profile
+@profile
 def generate_cloudlets(MC):
-    ds = xray.open_mfdataset(((MC['input_directory'] + "/*.nc")), concat_dim="time",
-        chunks=1000)
+    ds = xray.open_mfdataset(((MC['input_directory'] + "/*.nc")), \
+        concat_dim="time", chunks=1000)
 
     for i in range(len(ds.time)):
         core, condensed, plume, u, v, w = load_data(ds.isel(time=i))

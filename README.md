@@ -2,13 +2,11 @@
 ==============
 
 # Updated cloud-tracking algorithm for SAM #
- To run the cloud-tracking algorithm, use 
+To run the cloud-tracking algorithm, use 
 
     python run_tracker.py [Input_dir]
 
-where [Input_dir] is the address of the input directory. 
-
- If no [Input_dir] is given, the scripy will try to find a folder named "data" in the current directory that contains the netCDF4 tracking files. Other model parameters will be automatically retrieved from the given files. 
+where [Input_dir] is the address of the input directory. The model parameters will automatically be retrieved from the given files. 
 
 ## Current Status ##
 
@@ -28,7 +26,7 @@ where [Input_dir] is the address of the input directory.
 ### Output cloud data ###
 
 ## Profiling ##
- To profile the cloud-tracking algorithm using line_profiler, do
+To profile the cloud-tracking algorithm using line_profiler, do
 	
 	python -O -B -m kernprof -l -v run_tracker.py > line_stats.txt
 
