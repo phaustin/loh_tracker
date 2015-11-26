@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import glob, sys, os
+import sys, os
 
 from .generate_cloudlets import generate_cloudlets
 from .cluster_cloudlets import cluster_cloudlets

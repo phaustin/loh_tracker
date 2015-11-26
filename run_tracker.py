@@ -1,14 +1,10 @@
 import sys
-import lib.model_param as mc
-
 from cloudtracker import main
     
 def run_tracker(input_dir):
-    model_config = mc.model_config
-    
     print( " Running the cloud-tracking algorithm... " )
     print( " Input dir: \"" + input_dir + "\" \n" )
-    
+
     main.main(input_dir)
 
     print( "\n Entrainment analysis completed " )
