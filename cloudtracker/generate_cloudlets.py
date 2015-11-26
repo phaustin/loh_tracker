@@ -16,16 +16,17 @@ pkl files are saved in pkl/ subdirectory indexed by time
 """
 
 import numpy as np
-import numba
+import numba, code 
 
 from netCDF4 import Dataset as nc
-import xray, dask, h5py
+from concurrent.futures import ProcessPoolExecutor
+
+import xray, dask, h5py, asyncio
 
 from .utility_functions import index_to_zyx, expand_indexes
 
 #-------------------
 
-@profile
 def expand_cloudlet(cloudlet, indexes, MC):
     """Given an array of indexes composing a cloudlet and a boolean mask 
     array indicating if each model index may be expanded into (True) or 
@@ -52,7 +53,6 @@ def expand_cloudlet(cloudlet, indexes, MC):
 
 #---------------------
 
-@profile
 def expand_current_cloudlets(key, cloudlets, mask, MC):
 
     cloudlet_points = []
@@ -83,7 +83,6 @@ def expand_current_cloudlets(key, cloudlets, mask, MC):
 
 #---------------------
 
-@profile
 def make_new_cloudlets(key, mask, MC):
     indexes = np.arange(MC['nx']*MC['ny']*MC['nz'])[mask]
     cloudlets = []
@@ -112,16 +111,12 @@ def make_new_cloudlets(key, mask, MC):
 
 #-----------------
 
-# TODO (LOH): Parallelize 
-@profile
 def find_mean_cloudlet_velocity(cloudlets, 
                                 u, v, w, 
                                 MC):
-    # TODO: get mean velocities directly from model values
     dx, dy, dz, dt = MC['dx'], MC['dy'], MC['dz'], MC['dt']                                
     ug, vg = MC['ug'], MC['vg']
-
-    u, v, w = u.values, v.values, u.values
+    
     for cloudlet in cloudlets:
         if len(cloudlet['condensed']) > 0:
             K, J, I = index_to_zyx( cloudlet['condensed'], MC['nz'], MC['ny'], MC['nx'] )
@@ -138,7 +133,6 @@ def find_mean_cloudlet_velocity(cloudlets,
             cloudlet['v_condensed'] = 0.
             cloudlet['w_condensed'] = 0.
 
-
         K, J, I = index_to_zyx( cloudlet['plume'], MC['nz'], MC['ny'], MC['nx'] )
         # find the mean motion of the cloudlet
         u_mean = u[K, J, I].mean()-ug
@@ -153,8 +147,7 @@ def find_mean_cloudlet_velocity(cloudlets,
 
 #----------------------------
 
-@profile
-def find_cloudlets(core, condensed, plume, u, v, w, MC): 
+def find_cloudlets(time, core, condensed, plume, u, v, w, MC): 
     # find the indexes of all the core and plume points
     core = np.ravel(core)
     condensed = np.ravel(condensed)
@@ -210,12 +203,23 @@ def find_cloudlets(core, condensed, plume, u, v, w, MC):
     
     print(" \t%d plume cloudlets" % (nplume-ncondensed))
 
-    # TODO: parallelize
+    u, v, w = u.values, v.values, w.values
     cloudlets = find_mean_cloudlet_velocity(cloudlets, 
                                             u, v, w,
                                             MC)
 
-    return cloudlets
+    cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', \
+        'v_condensed', 'w_condensed', 'u_plume', 'v_plume', 'w_plume']
+    with h5py.File('cloudtracker/hdf5/cloudlets_%08g.h5' % MC['time'], "w") as f:
+        for n in range(len(cloudlets)):
+            grp = f.create_group(str(n))
+            for var in cloudlet_items:
+                if(var in ['core', 'condensed', 'plume']):
+                    dset = grp.create_dataset(var, data=cloudlets[n][var][...])
+                else:
+                    dset = grp.create_dataset(var, data=cloudlets[n][var])
+
+    return 
 
 def load_data(ds):
     core = ds.variables['core'][:].astype(bool)
@@ -225,26 +229,34 @@ def load_data(ds):
     v = ds.variables['v'][:].astype(np.float)
     w = ds.variables['w'][:].astype(np.float)
 
-    return core, condensed, plume, u, v, w
+    MC = {}
+    MC['time'] = int(ds.time)
 
-@profile
-def generate_cloudlets(MC):
-    ds = xray.open_mfdataset(((MC['input_directory'] + "/*.nc")), \
+    # TODO: These should directly be read from the 
+    #       netCDF4 tracking files as attributes
+    MC['nx'] = ds.x.size
+    MC['ny'] = ds.y.size
+    MC['nz'] = ds.z.size
+
+    MC['dx'] = ds.indexes['x'][1] - ds.indexes['x'][0]
+    MC['dy'] = ds.indexes['y'][1] - ds.indexes['y'][0]
+    MC['dz'] = ds.indexes['z'][1] - ds.indexes['z'][0]
+    MC['dt'] = 60 
+
+    MC['ug'] = -8.
+    MC['vg'] = 0.
+
+    return core, condensed, plume, u, v, w, MC
+
+def generate_cloudlets(input_directory):
+    ds = xray.open_mfdataset(((input_directory + "/*.nc")), \
         concat_dim="time", chunks=1000)
 
-    for i in range(len(ds.time)):
-        core, condensed, plume, u, v, w = load_data(ds.isel(time=i))
-        cloudlets = find_cloudlets(core, condensed, plume, u, v, w, MC)
-        
-        # # TEST: linear calls instead of for loop to speed this up?
-        # with h5py.File('hdf5/cloudlets_%08g.h5' % i, "w") as f:
-        #     for n in range(len(cloudlets)):
-        #         grp = f.create_group(str(n))
-        #         for var in cloudlet_items:
-        #             if(var in ['core', 'condensed', 'plume']):
-        #                 dset = grp.create_dataset(var, data=cloudlets[n][var][...])
-        #             else:
-        #                 deset = grp.create_dataset(var, data=cloudlets[n][var])
+    # TODO: Parallelize (concurrent.futures)
+    for time in range(len(ds.time)):
+        core, condensed, plume, u, v, w, MC = load_data(ds.isel(time=time))
+        find_cloudlets(time, core, condensed, plume, u, v, w, MC)
+
         break
     
 if __name__ == "__main__":

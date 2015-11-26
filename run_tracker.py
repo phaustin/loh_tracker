@@ -8,9 +8,8 @@ def run_tracker(input_dir):
     
     print( " Running the cloud-tracking algorithm... " )
     print( " Input dir: \"" + input_dir + "\" \n" )
-
-    model_config['input_directory'] = input_dir
-    main.main(model_config)
+    
+    main.main(input_dir)
 
     print( "\n Entrainment analysis completed " )
 

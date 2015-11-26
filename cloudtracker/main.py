@@ -1,28 +1,27 @@
 #!/usr/bin/env python
 
-import glob
-import sys, os, gc
+import glob, sys, os
 
 from .generate_cloudlets import generate_cloudlets
 from .cluster_cloudlets import cluster_cloudlets
 from .make_graph import make_graph
 from .output_cloud_data import output_cloud_data
 
-def main(MC, save_all=True):
+def main(input_dir, save_all=True):
     sys.setrecursionlimit(1000000)
 
-    if not os.path.exists('output'):
-        os.mkdir('output')
-    if not os.path.exists('hdf5'):
-        os.mkdir('hdf5')
-
-    # TODO: command line input for data directory
+    if not os.path.exists('cloudtracker/output'):
+        os.mkdir('cloudtracker/output')
+    if not os.path.exists('cloudtracker/hdf5'):
+        os.mkdir('cloudtracker/hdf5')
 
 #----cloudlets----
+
     print( " Gathering cloudlets... " )
 
-    generate_cloudlets(MC)
+    generate_cloudlets(input_dir)
     return
+    
 #----cluster----
 
     print( " Creating clusters... " )

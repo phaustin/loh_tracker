@@ -1,11 +1,11 @@
 import numpy as np
 
-import numba, code
+import numba
 from numba import int64
 
 #---------------------------------
 
-@numba.jit((int64[:], int64, int64, int64), nopython=True)
+@numba.jit((int64[:], int64, int64, int64), nopython=True, nogil=True)
 def index_to_zyx(index, nz, ny, nx):
     z = index // (ny*nx)
     index = index % (ny*nx)
@@ -14,14 +14,14 @@ def index_to_zyx(index, nz, ny, nx):
     return (z, y, x)
 
 @numba.jit(int64[:](int64[:], int64[:], int64[:], \
-    int64, int64, int64), nopython=True)
+    int64, int64, int64), nopython=True, nogil=True)
 def zyx_to_index(z, y, x, nz, ny, nx):
     return (ny*nx*z + nx*y + x)
 
 #---------------------------------
 
 @numba.jit((int64, int64, int64, int64[:], int64[:, :], \
-    int64, int64, int64), nopython=True)
+    int64, int64, int64), nopython=True, nogil=True)
 def jit_expand(z, y, x, nearest, expanded_cell, nz, ny, nx):
     for index_3 in range(7): 
         expanded_cell[0][index_3] = (z + nearest[index_3 + 0]) % nz
@@ -49,22 +49,6 @@ def expand_indexes(indexes, nz, ny, nx):
         jit_expand(K_J_I[0][i], K_J_I[1][i], K_J_I[2][i], \
             nearest, expanded_cell, nz, ny, nx)
         expanded_index[:, i*7:i*7+7] = expanded_cell
-
-    # ## Original
-    # stack_list = [K_J_I, ]
-    # nearest = np.array([[[-1], [0], [0]], [[1], [0], [0]],
-    #              [[0], [-1], [0]], [[0], [1], [0]], 
-    #              [[0], [0], [-1]], [[0], [0], [1]]])
-    # for item in nearest:
-    #     stack_list.append(K_J_I + item)
-        
-    # expanded_index2 = np.hstack(stack_list)
-
-    # re-entrant domain
-    # expanded_index[0, expanded_index[0, :] == nz] = nz-1
-    # expanded_index[0, expanded_index[0, :] < 0] = 0
-    # expanded_index[1, :] = expanded_index[1, :]%ny
-    # expanded_index[2, :] = expanded_index[2, :]%nx
 
     # convert back to indexes
     expanded_index = zyx_to_index(expanded_index[0, :],
