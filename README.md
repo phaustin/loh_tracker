@@ -12,8 +12,8 @@ where [Input_dir] is the address of the input directory. The model parameters wi
 
 ### Main ###
 - [x] Make run_tracker.py run with command arg
-- [ ] Get rid of config.cfg 
-- [ ] Read model parameters from xray dataset
+- [x] Get rid of config.cfg 
+- [x] Read model parameters from xray dataset
 - [ ] Write model parameters to HDF5 dataset
 
 ### Generate cloudlets ###
