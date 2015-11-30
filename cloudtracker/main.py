@@ -45,7 +45,6 @@ def main(input_dir, save_all=True):
             
 #----output----
     
-    # TODO: Parallelize file output (multiprocessing)
     for n in range(nt):
         print(" Outputting cloud data, time step: %d" % n)
         output_cloud_data(cloud_graphs, cloud_noise, n, MC)

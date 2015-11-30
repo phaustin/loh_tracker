@@ -19,7 +19,6 @@ import numpy as np
 import numba, code 
 
 from netCDF4 import Dataset as nc
-from concurrent.futures import ProcessPoolExecutor
 
 import xray, dask, h5py, asyncio
 
@@ -210,7 +209,9 @@ def find_cloudlets(time, core, condensed, plume, u, v, w, MC):
 
     cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', \
         'v_condensed', 'w_condensed', 'u_plume', 'v_plume', 'w_plume']
-    with h5py.File('cloudtracker/hdf5/cloudlets_%08g.h5' % MC['time'], "w") as f:
+    filename = 'cloudtracker/hdf5/cloudlets_%08g.h5' % MC['time']
+    print(" \t%s\n " % filename)
+    with h5py.File(filename, "w") as f:
         for n in range(len(cloudlets)):
             grp = f.create_group(str(n))
             for var in cloudlet_items:
@@ -232,8 +233,8 @@ def load_data(ds):
     MC = {}
     MC['time'] = int(ds.time)
 
-    # TODO: These should directly be read from the 
-    #       netCDF4 tracking files as attributes
+    # TODO: These should directly be read from the tracking files as attributes
+    #       Left as is for now as this requires re-producing all tracking files
     MC['nx'] = ds.x.size
     MC['ny'] = ds.y.size
     MC['nz'] = ds.z.size
@@ -256,8 +257,6 @@ def generate_cloudlets(input_directory):
     for time in range(len(ds.time)):
         core, condensed, plume, u, v, w, MC = load_data(ds.isel(time=time))
         find_cloudlets(time, core, condensed, plume, u, v, w, MC)
-
-        break
     
 if __name__ == "__main__":
     import doctest
