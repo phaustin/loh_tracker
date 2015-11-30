@@ -74,32 +74,34 @@ def find_halo(indexes, MC):
 
 #---------------------------
 
+# @numba.jit(nopython=True, nogil=True)
 def calc_distance(point1, point2, MC):
     # Calculate distances corrected for reentrant domain
     ny, nx = MC['ny'], MC['nx']
         
-    delta_x = np.abs(point2[2, :] - point1[2, :])
+    delta_x = np.abs(point2[2][:] - point1[2][:])
     mask = delta_x >= (nx/2)
     delta_x[mask] = nx - delta_x[mask]
                     
-    delta_y = np.abs(point2[1, :] - point1[1, :])
+    delta_y = np.abs(point2[1][:] - point1[1][:])
     mask = delta_y >= (ny/2)
     delta_y[mask] = ny - delta_y[mask]
                                 
-    delta_z = point2[0, :] - point1[0, :]
+    delta_z = point2[0][:] - point1[0][:]
                                     
     return np.sqrt(delta_x**2 + delta_y**2 + delta_z**2)
                                         
 #---------------------------
 
+# @numba.jit(nopython=True, nogil=True)
 def calc_radii(data, reference, MC):
     ny, nx = MC['ny'], MC['nx']
     data_points = index_to_zyx(data, MC['nz'], MC['ny'], MC['nx'])
-    ref_points = index_to_zyx(reference, MC['nz'], MC['ny'], MC['nx'])
+    ref_points = index_to_zyx(reference, MC)
     
     result = np.ones(data.shape, np.float)*(nx + ny)
 
-    k_values = np.unique(ref_points[0,:])
+    k_values = np.unique(ref_points[0][:])
     
     for k in k_values:
         data_mask = data_points[0, :] == k

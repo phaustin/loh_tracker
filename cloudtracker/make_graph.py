@@ -2,10 +2,11 @@
 #Runtime (690,130,128,128): ?
 
 import pickle
-import h5py
-import gc
+
 import networkx
-import numpy
+
+import numpy as np
+import glob, h5py, dask, code
 
 full_output=False
 
@@ -53,25 +54,22 @@ def full_output(cloud_times, cloud_graphs, merges, splits, MC):
 
 #---------------------
 
-def make_graph(MC):
+def make_graph():
     graph = networkx.Graph()
 
     merges = {}
     splits = {}
 
-    for t in range(MC['nt']):
-        with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as clusters:
-
-            keys = numpy.array(clusters.keys(), dtype=int)
+    for t in range(len(glob.glob('cloudtracker/hdf5/clusters_*.h5'))):
+        with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, 'r') as f:
+            keys = list(f['clusters'].keys())
             keys.sort()
             for id in keys:
-                # Make dictionaries of every split and every merge event that occurs
-                # in a cluster's lifecycle
-                m_conns = set(clusters['%s/merge_connections' % id])
-                s_conns = set(clusters['%s/split_connections' % id])
-                core = len(clusters['%s/core' % id])
-                condensed = len(clusters['%s/condensed' % id])
-                plume = len(clusters['%s/plume' % id])
+                m_conns = set(f['%s/merge_connections' % id])
+                s_conns = set(f['%s/split_connections' % id])
+                core = len(f['%s/core' % id])
+                condensed = len(f['%s/condensed' % id])
+                plume = len(f['%s/plume' % id])
                 attr_dict = {'merge': m_conns,
                              'split': s_conns,
                              'core': core,
@@ -79,20 +77,20 @@ def make_graph(MC):
                              'plume': plume}
                              
                 for item in m_conns:
-                    node1 = '%08g|%08g' % (t, id)
-                    node2 = '%08g|%08g' % (t-1, item)
+                    node1 = '%08g|%08g' % (t, int(id))
+                    node2 = '%08g|%08g' % (t-1, int(item))
                     merges[node2] = node1
                 for item in s_conns:
-                    node1 = '%08g|%08g' % (t, id)
-                    node2 = '%08g|%08g' % (t, item)
+                    node1 = '%08g|%08g' % (t, int(id))
+                    node2 = '%08g|%08g' % (t, int(item))
                     splits[node2] = node1            
             
                 # Construct a graph of the cloudlet connections
-                graph.add_node('%08g|%08g' % (t, id), attr_dict = attr_dict)
-                if clusters[str(id)]['past_connections']:
-                    for item in clusters[str(id)]['past_connections']:
-                        graph.add_edge('%08g|%08g' % (t-1, item),
-                                       '%08g|%08g' % (t, id))
+                graph.add_node('%08g|%08g' % (t, int(id)), attr_dict = attr_dict)
+                if f['%s/past_connections' % id]:
+                    for item in f['%s/past_connections' % id]:
+                        graph.add_edge('%08g|%08g' % (t-1, int(item)),
+                                       '%08g|%08g' % (t, int(id)))
 
     # Iterate over every cloud in the graph
     for subgraph in networkx.connected_component_subgraphs(graph):
@@ -109,7 +107,7 @@ def make_graph(MC):
                 if subgraph.node[node]['split']:
                     item = subgraph.node[node]['split'].pop()
                     t = int(node[:8]) 
-                    graph.add_edge(node, '%08g|%08g' % (t, item))
+                    graph.add_edge(node, '%08g|%08g' % (t, int(item)))
 
     for subgraph in networkx.connected_component_subgraphs(graph):
         # Find the duration over which the cloud_graph has cloudy points.
@@ -124,7 +122,7 @@ def make_graph(MC):
                 if subgraph.node[node]['merge']:
                     item = subgraph.node[node]['merge'].pop()
                     t = int(node[:8])
-                    graph.add_edge(node, '%08g|%08g' % (t-1, item))
+                    graph.add_edge(node, '%08g|%08g' % (t-1, int(item)))
 
 
     cloud_times = []
@@ -158,8 +156,8 @@ def make_graph(MC):
             times = list(times)
             times.sort()
             cloud_times.append(tuple(times))
-
-    cloud_graphs.sort()
+            
+    cloud_graphs.sort(key=lambda key:keys[0])
     cloud_graphs.reverse()
     cloud_graphs = [item[1] for item in cloud_graphs]
     
