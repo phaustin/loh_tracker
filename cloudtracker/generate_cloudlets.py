@@ -16,11 +16,11 @@ pkl files are saved in pkl/ subdirectory indexed by time
 """
 
 import numpy as np
-import numba, code 
+import numba 
 
 from netCDF4 import Dataset as nc
 
-import xray, dask, h5py, asyncio
+import xray, dask, h5py
 
 from .utility_functions import index_to_zyx, expand_indexes
 
@@ -211,12 +211,28 @@ def find_cloudlets(time, core, condensed, plume, u, v, w, MC):
         'v_condensed', 'w_condensed', 'u_plume', 'v_plume', 'w_plume']
     filename = 'cloudtracker/hdf5/cloudlets_%08g.h5' % MC['time']
     print(" \t%s\n " % filename)
-    with h5py.File(filename, "w") as f:
+    with h5py.File(filename) as f:
+        # Save model parameters 
+        grp = f.require_group("model")
+        grp.attrs['time'] = MC['time']
+        
+        grp.attrs['nx'] = MC['nx']
+        grp.attrs['ny'] = MC['ny']
+        grp.attrs['nz'] = MC['nz']
+        
+        grp.attrs['dx'] = MC['dx']
+        grp.attrs['dy'] = MC['dy']
+        grp.attrs['dz'] = MC['dz']
+        grp.attrs['dt'] = MC['dt']
+
+        grp.attrs['ug'] = MC['ug']
+        grp.attrs['vg'] = MC['vg']
+
         for n in range(len(cloudlets)):
-            grp = f.create_group(str(n))
+            grp = f.require_group(str(n))
             for var in cloudlet_items:
                 if(var in ['core', 'condensed', 'plume']):
-                    dset = grp.create_dataset(var, data=cloudlets[n][var][...])
+                    dset = grp.create_dataset(var, data=cloudlets[n][var][...], chunks=True)
                 else:
                     dset = grp.create_dataset(var, data=cloudlets[n][var])
 
@@ -254,7 +270,8 @@ def generate_cloudlets(input_directory):
         concat_dim="time", chunks=1000)
 
     # TODO: Parallelize (concurrent.futures)
-    for time in range(len(ds.time)):
+    # for time in range(len(ds.time)):
+    for time in range(10):
         core, condensed, plume, u, v, w, MC = load_data(ds.isel(time=time))
         find_cloudlets(time, core, condensed, plume, u, v, w, MC)
     
