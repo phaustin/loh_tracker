@@ -63,7 +63,7 @@ def expand_indexes(indexes, nz, ny, nx):
 def find_halo(indexes, MC):
     # Expand the set of core points to include the nearest 
     # neighbour points in all directions.
-    new_indexes = expand_indexes(indexes, MC)
+    new_indexes = expand_indexes(indexes, MC['nz'], MC['ny'], MC['nx'])
 
     # From the expanded mask, select the points outside the core
     # expand_index_list returns only unique values,
@@ -94,8 +94,8 @@ def calc_distance(point1, point2, MC):
 
 def calc_radii(data, reference, MC):
     ny, nx = MC['ny'], MC['nx']
-    data_points = index_to_zyx(data, MC)
-    ref_points = index_to_zyx(reference, MC)
+    data_points = index_to_zyx(data, MC['nz'], MC['ny'], MC['nx'])
+    ref_points = index_to_zyx(reference, MC['nz'], MC['ny'], MC['nx'])
     
     result = np.ones(data.shape, np.float)*(nx + ny)
 

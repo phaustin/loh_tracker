@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
-import numpy
+import numpy, code
 from .utility_functions import expand_indexes, \
         index_to_zyx, find_halo, calc_distance
 
 def calc_com(mask, MC):
     ny, nx = MC['ny'], MC['nx']
-    pts = index_to_zyx( mask, MC )
+    pts = index_to_zyx( mask, MC['nz'], MC['ny'], MC['nx'] )
 
-    z = pts[0,:].astype(float).mean()
+    z = pts[0][:].astype(float).mean()
     # Correct Center of Mass for reentrant domain
-    y1 = pts[1,:].astype(float)
-    x1 = pts[2,:].astype(float)
+    y1 = pts[1][:].astype(float)
+    x1 = pts[2][:].astype(float)
     y2 = (y1 < ny/2.)*y1 + (y1>= ny/2.)*(y1 - ny)
     x2 = (x1 < nx/2.)*x1 + (x1>= nx/2.)*(x1 - nx)
     y1m = y1.mean()
@@ -192,7 +192,7 @@ class Cluster:
                         result[adjacent_cloudlet] = volume
                         
         final = [(result[cloudlet], cloudlet) for cloudlet in result]
-        final.sort()
+        final.sort(key=lambda key:key[0])
         final.reverse()
         result = [item[1] for item in final]
         return result
