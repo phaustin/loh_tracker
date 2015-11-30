@@ -207,26 +207,15 @@ def find_cloudlets(time, core, condensed, plume, u, v, w, MC):
                                             u, v, w,
                                             MC)
 
+    attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
     cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', \
         'v_condensed', 'w_condensed', 'u_plume', 'v_plume', 'w_plume']
     filename = 'cloudtracker/hdf5/cloudlets_%08g.h5' % MC['time']
     print(" \t%s\n " % filename)
-    with h5py.File(filename) as f:
+    with h5py.File(filename, 'w') as f:
         # Save model parameters 
-        grp = f.require_group("model")
-        grp.attrs['time'] = MC['time']
-        
-        grp.attrs['nx'] = MC['nx']
-        grp.attrs['ny'] = MC['ny']
-        grp.attrs['nz'] = MC['nz']
-        
-        grp.attrs['dx'] = MC['dx']
-        grp.attrs['dy'] = MC['dy']
-        grp.attrs['dz'] = MC['dz']
-        grp.attrs['dt'] = MC['dt']
-
-        grp.attrs['ug'] = MC['ug']
-        grp.attrs['vg'] = MC['vg']
+        for item in attribute_items:
+            f.attrs[item] = MC[item]
 
         for n in range(len(cloudlets)):
             grp = f.require_group(str(n))
@@ -270,8 +259,7 @@ def generate_cloudlets(input_directory):
         concat_dim="time", chunks=1000)
 
     # TODO: Parallelize (concurrent.futures)
-    # for time in range(len(ds.time)):
-    for time in range(10):
+    for time in range(len(ds.time)):
         core, condensed, plume, u, v, w, MC = load_data(ds.isel(time=time))
         find_cloudlets(time, core, condensed, plume, u, v, w, MC)
     
