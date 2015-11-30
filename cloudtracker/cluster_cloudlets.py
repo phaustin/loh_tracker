@@ -3,7 +3,7 @@
 
 import numba, glob, code
 
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 import h5py, dask, h5py, asyncio
 import numpy as np
@@ -15,7 +15,7 @@ from .utility_functions import index_to_zyx, zyx_to_index
 saveit = True
 
 #--------------------------
-#@profile
+
 def make_spatial_cloudlet_connections(cloudlets, MC):
     # Find all the cloudlets which have adjacent cores or plumes
     # Store the information in the cloudlet.adjacent dict.
@@ -87,7 +87,6 @@ def count_overlaps(key, overlaps, cloudlet):
     for n, index in enumerate(indexes):
         cloudlet.overlap[key].append( (bin_count[n],  index) )
 
-#@profile
 def make_temporal_connections(cloudlets, old_clusters, MC):
     # For each cloudlet, find the previous time's
     # cluster that overlaps the cloudlet the most
@@ -147,7 +146,7 @@ def make_temporal_connections(cloudlets, old_clusters, MC):
             cloudlet.overlap[item].reverse()
             
 #---------------------
-#@profile
+
 def create_new_clusters(cloudlets, clusters, max_id, MC):
     core_list = []
     condensed_list = []
@@ -202,7 +201,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
     return clusters
 
 #---------------------
-#@profile
+
 def associate_cloudlets_with_previous_clusters(cloudlets, old_clusters, MC):
     clusters = {}
     new_cloudlets = []
@@ -296,7 +295,7 @@ def split_clusters(clusters, max_id, MC):
     return max_id
                 
 #----------
-#@profile
+
 def make_clusters(cloudlets, old_clusters, MC):
     # make_clusters generates a dictionary of clusters
 
@@ -322,62 +321,50 @@ def make_clusters(cloudlets, old_clusters, MC):
 
 #---------------------
 
-def load_cloudlets(t):
+def filter_cloudlets(cloudlet):
     cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', 'v_condensed', \
         'w_condensed', 'u_plume', 'v_plume', 'w_plume']
 
-    with h5py.File('cloudtracker/hdf5/cloudlets_%08g.h5' % t, 'r') as cloudlets:
+    cldlet = {}
+    for var in cloudlet_items:
+        cldlet[var] = cloudlet['%s' % var][()]
+
+    return cldlet
+
+# @profile
+def load_cloudlets(t):
+    attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
+    with h5py.File( 'cloudtracker/hdf5/cloudlets_%08g.h5' % t, \
+                    'r', driver='core' ) as cloudlets:
+        # Read model parameters
+        MC = {}
+        for item in attribute_items:
+            MC[item] = cloudlets.attrs[item] 
+
         cloudlet = {}
         result = []
         n = 0
 
-        # Read model parameters
-        MC = {}
-        MC['time'] = cloudlets['model'].attrs['time']
-        MC['nx'] = cloudlets['model'].attrs['nx']
-        MC['ny'] = cloudlets['model'].attrs['ny']
-        MC['nz'] = cloudlets['model'].attrs['nz']
+        with ThreadPoolExecutor() as executor:
+            cloudlet = executor.map(filter_cloudlets, \
+                                    list(cloudlets.values()), chunksize=512)
+            cloudlet = list(cloudlet)
 
-        MC['dx'] = cloudlets['model'].attrs['dx']
-        MC['dy'] = cloudlets['model'].attrs['dy']
-        MC['dz'] = cloudlets['model'].attrs['dz']
-        MC['dt'] = cloudlets['model'].attrs['dt'] 
-
-        MC['ug'] = cloudlets['model'].attrs['ug']
-        MC['vg'] = cloudlets['model'].attrs['vg']
-
-        # Iterate through cloudlets (minus model parameters)
-        for i in range(len(cloudlets) - 1):
-            if ((len(cloudlets[str(i)]['plume']) > 7) 
-                or (len(cloudlets[str(i)]['condensed']) > 1)
-                or (len(cloudlets[str(i)]['core']) > 0)):
-
-                for var in cloudlet_items:
-                    cloudlet[var] = cloudlets['%d/%s' % (i, var)][...]
-                result.append( Cloudlet( n, t, cloudlet, MC ) )
-                n += 1
+            for i, item in enumerate(cloudlet):
+                if len(item) > 1:
+                    result.append(Cloudlet( n, t, item, MC))
+                    n += 1
 
     return result, MC
 
 def save_clusters(clusters, t, MC):
     new_clusters = {}
 
+    attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
     with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, "w") as f:
         # Save model parameters 
-        grp = f.require_group("model")
-        grp.attrs['time'] = MC['time']
-        
-        grp.attrs['nx'] = MC['nx']
-        grp.attrs['ny'] = MC['ny']
-        grp.attrs['nz'] = MC['nz']
-        
-        grp.attrs['dx'] = MC['dx']
-        grp.attrs['dy'] = MC['dy']
-        grp.attrs['dz'] = MC['dz']
-        grp.attrs['dt'] = MC['dt']
-
-        grp.attrs['ug'] = MC['ug']
-        grp.attrs['vg'] = MC['vg']
+        for item in attribute_items:
+            f.attrs[item] = MC[item]
 
         for id, clust in clusters.items():
             grp = f.create_group(str(id))
@@ -397,9 +384,8 @@ def save_clusters(clusters, t, MC):
     # NOTE: Ignore cluster_objects
     #cPickle.dump(clusters, open('pkl/cluster_objects_%08g.pkl' % t, 'wb'))
 
-#@profile
-def cluster_cloudlets(input_dir):
-
+# @profile
+def cluster_cloudlets():
     print(" \tcluster cloudlets; time step: 0 ")
     cloudlets, MC = load_cloudlets(0)    
     make_spatial_cloudlet_connections( cloudlets, MC )
@@ -422,7 +408,6 @@ def cluster_cloudlets(input_dir):
         print(" \tFound %d clusters\n " % len(new_clusters))
 
         save_clusters(new_clusters, t, MC)
-        break
 
 if __name__ == "__main__":
     main()

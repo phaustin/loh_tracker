@@ -217,13 +217,19 @@ def find_cloudlets(time, core, condensed, plume, u, v, w, MC):
         for item in attribute_items:
             f.attrs[item] = MC[item]
 
+        # Filter out noisy cloud region
         for n in range(len(cloudlets)):
-            grp = f.require_group(str(n))
-            for var in cloudlet_items:
-                if(var in ['core', 'condensed', 'plume']):
-                    dset = grp.create_dataset(var, data=cloudlets[n][var][...], chunks=True)
-                else:
-                    dset = grp.create_dataset(var, data=cloudlets[n][var])
+            if (cloudlets[n]['plume'].size > 8
+                or (cloudlets[n]['condensed'].size > 1)
+                or (cloudlets[n]['core'].size > 0)):
+
+                grp = f.require_group(str(n))
+                for var in cloudlet_items:
+                    if(var in ['core', 'condensed', 'plume']):
+                        dset = grp.create_dataset(var, \
+                                data=cloudlets[n][var][...])
+                    else:
+                        dset = grp.create_dataset(var, data=cloudlets[n][var])
 
     return 
 
