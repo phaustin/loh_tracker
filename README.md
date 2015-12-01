@@ -9,6 +9,7 @@ To run the cloud-tracking algorithm, use
 where [Input_dir] is the address of the input directory. The model parameters will automatically be retrieved from the given files. 
 
 ## Current Status ##
+The cloud-tracking requires Python 3.5.
 
 ### Main ###
 - [x] Make run_tracker.py run with command arg
@@ -22,14 +23,17 @@ where [Input_dir] is the address of the input directory. The model parameters wi
 - [x] Wrap up with dask -> HDF5 output
 
 ### Cluster cloudlets ###
+- [x] Filter noisy cloudlets out for speedup
+- [x] Threaded HDF5 file read for speed
 
 ### Output cloud data ###
+- [ ] Wrap file I/O with dask 
 
 ## Profiling ##
 To profile the cloud-tracking algorithm using line_profiler, do
-	
-	python -O -B -m kernprof -l -v run_tracker.py > line_stats.txt
+    
+    python -O -B -m kernprof -l -v run_tracker.py > line_stats.txt
 
-or, to run with a memory profiler instead,	
+or, to run with a memory profiler instead,  
 
-	python -O -B -m memory_profiler run_tracker.py > memory_stats.txt
+    python -O -B -m memory_profiler run_tracker.py > memory_stats.txt
