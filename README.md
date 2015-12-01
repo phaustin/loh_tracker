@@ -14,12 +14,12 @@ where [Input_dir] is the address of the input directory. The model parameters wi
 - [x] Make run_tracker.py run with command arg
 - [x] Get rid of config.cfg 
 - [x] Read model parameters from xray dataset
-- [ ] Write model parameters to HDF5 dataset
+- [x] Write model parameters to HDF5 dataset
 
 ### Generate cloudlets ###
 - [x] Implement/benchmark asyncio operations on ~ 30,000 cloudlet computations
 - [x] Numba/Cython for the expansion algorithm (cloudtracker.utility_functions)
-- [ ] Wrap up with dask -> HDF5 output
+- [x] Wrap up with dask -> HDF5 output
 
 ### Cluster cloudlets ###
 
