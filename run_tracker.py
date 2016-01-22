@@ -11,7 +11,7 @@ def run_tracker(input_dir):
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        run_tracker("./data/tracking2")
+        run_tracker("./data/")
     elif len(sys.argv) == 2:
         run_tracker(sys.argv[1])
     else:
