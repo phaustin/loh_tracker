@@ -20,19 +20,18 @@ def main(input_dir, save_all=True):
     print( " Gathering cloudlets... " )
 
     generate_cloudlets(input_dir)
-    return
-    
+
 #----cluster----
 
-    print( " Creating clusters... " )
+    print( "\n Creating clusters... " )
 
-    cluster_cloudlets(MC)
+    cluster_cloudlets()
 
 #----graph----
 
-    print( " Make graph... " )
+    print( "\n Make graph... " )
     
-    cloud_graphs, cloud_noise = make_graph(MC)
+    cloud_graphs, cloud_noise = make_graph()
     
     print( "\tFound %d clouds" % len(cloud_graphs))
     
@@ -46,6 +45,6 @@ def main(input_dir, save_all=True):
 #----output----
     
     for n in range(nt):
-        print(" Outputting cloud data, time step: %d" % n)
-        output_cloud_data(cloud_graphs, cloud_noise, n, MC)
+        print("\n Outputting cloud data, time step: %d" % n)
+        output_cloud_data(cloud_graphs, cloud_noise, n)
             

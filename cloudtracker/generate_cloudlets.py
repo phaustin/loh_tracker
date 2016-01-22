@@ -264,7 +264,6 @@ def generate_cloudlets(input_directory):
     ds = xray.open_mfdataset(((input_directory + "/*.nc")), \
         concat_dim="time", chunks=1000)
 
-    # TODO: Parallelize (concurrent.futures)
     for time in range(len(ds.time)):
         core, condensed, plume, u, v, w, MC = load_data(ds.isel(time=time))
         find_cloudlets(time, core, condensed, plume, u, v, w, MC)

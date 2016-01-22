@@ -111,7 +111,7 @@ def save_text_file(clouds, t, MC):
     recarray.tofile(open('output/clouds_at_time_%08g.txt' % t, 'w'), '\r\n')
 
 # @profile
-def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
+def output_cloud_data(cloud_graphs, cloud_noise, t):
 
     print('Timestep:', t)
 
@@ -119,8 +119,14 @@ def output_cloud_data(cloud_graphs, cloud_noise, t, MC):
     cluster = {}
     clusters = {}
     items = ['core', 'condensed', 'plume']
-
+    attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
+    
     with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
+        # Read model parameters
+        MC = {}
+        for item in attribute_items:
+            MC[item] = cluster_dict.attrs[item] 
+
         keys = numpy.array(cluster_dict.keys(), dtype=int)
         keys.sort()
         for id in keys:
