@@ -240,7 +240,8 @@ class Cluster:
                     for cloudlet in group:
                         volume += cloudlet.volume
                     volumes.append((volume, group))                    
-                volumes.sort()
+                volumes.sort(key=lambda key:key[0])
+                volumes.reverse()
                 
                 if detached_groups:
                     attached_group_masks = []
@@ -256,7 +257,8 @@ class Cluster:
 
                         com_list = [(calc_distance(item_com, current_group[0], self.MC), current_group[1]) 
                                     for current_group in attached_group_masks]
-                        com_list.sort()
+                        com_list.sort(key=lambda key:key[0])
+                        com_list.reverse()
                         com_list[0][1].extend(item)
                     
                 groups = attached_groups
