@@ -12,7 +12,7 @@ import sys, gc
 
 def calc_shell(index, MC):
     # Expand the cloud points outward
-    maskindex = expand_indexes(index, MC)
+    maskindex = expand_indexes(index, MC['nz'], MC['ny'], MC['nx'])
     
     # From the expanded mask, select the points outside the cloud
     shellindex = numpy.setdiff1d(maskindex, index, assume_unique=True)
@@ -21,7 +21,7 @@ def calc_shell(index, MC):
 
 def calc_edge(index, shellindex, MC):
     # Find all the points just inside the clouds
-    maskindex = expand_indexes(shellindex, MC)
+    maskindex = expand_indexes(shellindex, MC['nz'], MC['ny'], MC['nx'])
     
     # From the expanded mask, select the points inside the cloud
     edgeindex = numpy.intersect1d(maskindex, index, assume_unique=True)
@@ -30,7 +30,7 @@ def calc_edge(index, shellindex, MC):
 
 def calc_env(index, shellindex, edgeindex, MC):
     if len(shellindex) > 0:
-        K_J_I = index_to_zyx(shellindex, MC)
+        K_J_I = index_to_zyx(shellindex, MC['nz'], MC['ny'], MC['nx'])
 
         n = 6
         for i in range(n):
@@ -46,12 +46,12 @@ def calc_env(index, shellindex, edgeindex, MC):
             maskindex = numpy.unique( zyx_to_index(maskindex[0, :],
                                                    maskindex[1, :],
                                                    maskindex[2, :],
-                                                   MC) )
+                                                   MC['nz'], MC['ny'], MC['nx']) )
 
             # From the expanded mask, select the points outside the cloud
             envindex = numpy.setdiff1d(maskindex, index, assume_unique = True)
 
-            K_J_I = index_to_zyx(envindex, MC)
+            K_J_I = index_to_zyx(envindex, MC['nz'], MC['ny'], MC['nx'])
             
         # Select the points within 4 grid cells of cloud
         r = calc_radii(envindex, edgeindex, MC)
@@ -71,17 +71,17 @@ def calculate_data(cluster, MC):
     result['condensed'] = condensed
     condensed_shell = calc_shell(condensed, MC)
     result['condensed_shell'] = condensed_shell
-    condensed_edge = calc_edge(condensed, condensed_shell, MC)
-    result['condensed_edge'] = condensed_edge
-    result['condensed_env'] = calc_env(condensed, condensed_shell, condensed_edge, MC)
+    # condensed_edge = calc_edge(condensed, condensed_shell, MC)
+    # result['condensed_edge'] = condensed_edge
+    # result['condensed_env'] = calc_env(condensed, condensed_shell, condensed_edge, MC)
 
     core = cluster['core']
     result['core'] = core
     core_shell = calc_shell(core, MC)
     result['core_shell'] = core_shell
-    core_edge = calc_edge(core, core_shell, MC)
-    result['core_edge'] = core_edge
-    result['core_env'] = calc_env(core, core_shell, core_edge, MC)
+    # core_edge = calc_edge(core, core_shell, MC)
+    # result['core_edge'] = core_edge
+    # result['core_env'] = calc_env(core, core_shell, core_edge, MC)
 
     return result
 
@@ -121,13 +121,13 @@ def output_cloud_data(cloud_graphs, cloud_noise, t):
     items = ['core', 'condensed', 'plume']
     attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
     
-    with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
+    with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
         # Read model parameters
         MC = {}
         for item in attribute_items:
             MC[item] = cluster_dict.attrs[item] 
 
-        keys = numpy.array(cluster_dict.keys(), dtype=int)
+        keys = numpy.array(list(cluster_dict.keys()), dtype=int)
         keys.sort()
         for id in keys:
             key = "%08g|%08g" % (t, id)
@@ -184,9 +184,9 @@ def output_cloud_data(cloud_graphs, cloud_noise, t):
             
     print("Number of Clouds at Current Timestep: ", len(clouds.keys()) + 1)
 
-    items = ['core', 'condensed', 'plume', 'core_shell', 'condensed_shell', \
-        'core_edge', 'condensed_edge', 'core_env', 'condensed_env']
-    with h5py.File('hdf5/clouds_%08g.h5' % t, 'w') as f:
+    items = ['core', 'condensed', 'plume', 'core_shell', 'condensed_shell']#, \
+        # 'core_edge', 'condensed_edge', 'core_env', 'condensed_env']
+    with h5py.File('cloudtracker/hdf5/clouds_%08g.h5' % t, 'w') as f:
         for id in clouds:
             grp = f.create_group(str(id))
             for point_type in clouds[id]:

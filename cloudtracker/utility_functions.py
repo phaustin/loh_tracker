@@ -74,7 +74,6 @@ def find_halo(indexes, MC):
 
 #---------------------------
 
-# @numba.jit(nopython=True, nogil=True)
 def calc_distance(point1, point2, MC):
     # Calculate distances corrected for reentrant domain
     ny, nx = MC['ny'], MC['nx']
@@ -93,11 +92,10 @@ def calc_distance(point1, point2, MC):
                                         
 #---------------------------
 
-# @numba.jit(nopython=True, nogil=True)
 def calc_radii(data, reference, MC):
     ny, nx = MC['ny'], MC['nx']
-    data_points = index_to_zyx(data, MC['nz'], MC['ny'], MC['nx'])
-    ref_points = index_to_zyx(reference, MC)
+    data_points = np.array(index_to_zyx(data, MC['nz'], MC['ny'], MC['nx']))
+    ref_points = np.array(index_to_zyx(reference, MC['nz'], MC['ny'], MC['nx']))
     
     result = np.ones(data.shape, np.float)*(nx + ny)
 
