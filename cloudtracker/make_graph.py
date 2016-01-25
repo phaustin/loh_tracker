@@ -62,7 +62,7 @@ def make_graph():
 
     for t in range(len(glob.glob('cloudtracker/hdf5/clusters_*.h5'))):
         with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, 'r') as f:
-            keys = list(f['clusters'].keys())
+            keys = list(f.keys())
             keys.sort()
             for id in keys:
                 m_conns = set(f['%s/merge_connections' % id])
