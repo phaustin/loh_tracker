@@ -5,23 +5,21 @@ from numba import int64
 
 #---------------------------------
 
-@numba.jit((int64[:], int64, int64, int64), nopython=True, nogil=True)
-def index_to_zyx(index, nz, ny, nx):
-    z = index // (ny*nx)
-    index = index % (ny*nx)
-    y = index // nx
-    x = index % nx
+@numba.jit(nopython=True, nogil=True)
+def jit_index_to_zyx(index, nz, ny, nx):
+    z = np.divide(index, (ny*nx))
+    index = np.mod(index, (ny*nx))
+    y = np.divide(index, (nx))
+    x = np.mod(index, nx)
     return (z, y, x)
 
-@numba.jit(int64[:](int64[:], int64[:], int64[:], \
-    int64, int64, int64), nopython=True, nogil=True)
+@numba.jit(nopython=True, nogil=True)
 def zyx_to_index(z, y, x, nz, ny, nx):
     return (ny*nx*z + nx*y + x)
 
 #---------------------------------
 
-@numba.jit((int64, int64, int64, int64[:], int64[:, :], \
-    int64, int64, int64), nopython=True, nogil=True)
+@numba.jit(nopython=True, nogil=True)
 def jit_expand(z, y, x, nearest, expanded_cell, nz, ny, nx):
     for index_3 in range(7): 
         expanded_cell[0][index_3] = (z + nearest[index_3 + 0]) % nz
@@ -74,8 +72,9 @@ def find_halo(indexes, MC):
 
 #---------------------------
 
+# TODO: Optimize Eulerian distance calculation (with modifications)
 def calc_distance(point1, point2, MC):
-    # Calculate distances corrected for reentrant domain
+    # Calculate distances corrected for re-entrant domain
     ny, nx = MC['ny'], MC['nx']
         
     delta_x = np.abs(point2[2][:] - point1[2][:])
