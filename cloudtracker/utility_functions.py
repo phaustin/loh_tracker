@@ -22,9 +22,9 @@ def zyx_to_index(z, y, x, nz, ny, nx):
 @numba.jit(nopython=True, nogil=True)
 def jit_expand(z, y, x, nearest, expanded_cell, nz, ny, nx):
     for index_3 in range(7): 
-        expanded_cell[0][index_3] = (z + nearest[index_3 + 0]) % nz
-        expanded_cell[1][index_3] = (y + nearest[index_3 + 1]) % ny
-        expanded_cell[2][index_3] = (x + nearest[index_3 + 2]) % nx
+        expanded_cell[0][index_3] = np.mod((z + nearest[index_3 + 0]), nz)
+        expanded_cell[1][index_3] = np.mod((y + nearest[index_3 + 1]), ny)
+        expanded_cell[2][index_3] = np.mod((x + nearest[index_3 + 2]), nx)
     return expanded_cell
 
 @numba.jit
