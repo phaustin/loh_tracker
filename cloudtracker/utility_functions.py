@@ -6,12 +6,20 @@ from numba import int64
 #---------------------------------
 
 @numba.jit(nopython=True, nogil=True)
-def jit_index_to_zyx(index, nz, ny, nx):
-    z = np.divide(index, (ny*nx))
+def index_to_zyx(index, nz, ny, nx):
+    z = np.floor_divide(index, (ny*nx))
     index = np.mod(index, (ny*nx))
-    y = np.divide(index, (nx))
+    y = np.floor_divide(index, (nx))
     x = np.mod(index, nx)
     return (z, y, x)
+
+# @numba.jit
+# def index_to_zyx(index, nz, ny, nx):
+#     z = index // (ny*nx)
+#     index = index % (ny*nx)
+#     y = index // nx
+#     x = index % nx
+#     return (z, y, x)
 
 @numba.jit(nopython=True, nogil=True)
 def zyx_to_index(z, y, x, nz, ny, nx):
