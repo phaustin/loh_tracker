@@ -25,8 +25,8 @@ def make_spatial_cloudlet_connections(cloudlets, MC):
     # Then it pulls the edge points from these 3d arrays
     # to see if the cloudlets are bordering other cloudlets
     
-    condensed_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), np.int)
-    plume_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), np.int)
+    condensed_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), dtype=np.int)
+    plume_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), dtype=np.int)
 
     # label the cloud core and plume points using the list index of the
     # cloudlet
@@ -43,9 +43,8 @@ def make_spatial_cloudlet_connections(cloudlets, MC):
             adjacent_condensed = np.unique(adjacent_condensed)
             for id in adjacent_condensed:
                 cloudlet.adjacent['condensed'].append((volumes[id], cloudlets[id]))
-            
-            cloudlet.adjacent['condensed'].sort(key=lambda key:key[0])
-            cloudlet.adjacent['condensed'].reverse()
+            cloudlet.adjacent['condensed'].sort(key=lambda x:x[0])
+            cloudlet.adjacent['condensed'][::-1]
 
         # Find all cloudlets that have adjacent plumes
         adjacent_plumes = plume_array[cloudlet.plume_halo()]
@@ -55,8 +54,8 @@ def make_spatial_cloudlet_connections(cloudlets, MC):
             adjacent_plumes = np.unique(adjacent_plumes)
             for id in adjacent_plumes:
                 cloudlet.adjacent['plume'].append((volumes[id], cloudlets[id]))
-            cloudlet.adjacent['plume'].sort(key=lambda key:key[0])
-            cloudlet.adjacent['plume'].reverse()
+            cloudlet.adjacent['plume'].sort(key=lambda x:x[0])
+            cloudlet.adjacent['plume'][::-1]
 
     return cloudlets
 
@@ -142,8 +141,8 @@ def make_temporal_connections(cloudlets, old_clusters, MC):
             count_overlaps('plume->plume', overlapping_plumes, cloudlet)
                 
         for item in cloudlet.overlap:
-            cloudlet.overlap[item].sort()
-            cloudlet.overlap[item].reverse()
+            cloudlet.overlap[item].sort(key=lambda x: x[0])
+            cloudlet.overlap[item][::-1]
             
 #---------------------
 
@@ -188,13 +187,16 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
         cloudlet = condensed_list.pop()
         cluster = Cluster(max_id, [cloudlet], MC)
         cluster.events.append('NCLD')
-        if (len(cluster.adjacent_cloudlets('condensed')) > 0): print("        condensed connection ERROR")
+
+        clusters[max_id] = cluster
+        max_id = max_id + 1
 
     # Make clusters out of the cloudlets without core points
     while plume_list:
         cloudlet = plume_list.pop()
         cluster = Cluster(max_id, [cloudlet], MC)
         cluster.events.append('NP')
+
         clusters[max_id] = cluster
         max_id = max_id + 1
 
@@ -281,7 +283,7 @@ def split_clusters(clusters, max_id, MC):
                     size = size + cloudlet.volume
                 sizes.append( (size, group) )
 
-            sizes.sort(key=lambda size: size[0])
+            sizes.sort(key=lambda x: x[0])
 
             # Turn the smaller groups into new clusters
             for size, group in sizes[:-1]:
@@ -334,9 +336,7 @@ def filter_cloudlets(cloudlet):
 # @profile
 def load_cloudlets(t):
     attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
-    with h5py.File( 'cloudtracker/hdf5/cloudlets_%08g.h5' % t, \
-                    'r', driver='core' ) as cloudlets:
-        # Read model parameters
+    with h5py.File( 'cloudtracker/hdf5/cloudlets_%08g.h5' % t) as cloudlets:
         MC = {}
         for item in attribute_items:
             MC[item] = cloudlets.attrs[item] 
@@ -345,14 +345,25 @@ def load_cloudlets(t):
         result = []
         n = 0
 
+        ids = np.array(list(cloudlets.keys()), dtype=int)
+        ids.sort()
+
         with ThreadPoolExecutor() as executor:
             cloudlet = executor.map(filter_cloudlets, \
                                     list(cloudlets.values()), chunksize=512)
             cloudlet = list(cloudlet)
 
-            for i, item in enumerate(cloudlet):
-                if len(item) > 1:
-                    result.append(Cloudlet( n, t, item, MC))
+            # for i, item in enumerate(cloudlet):
+            #     if len(item['plume']) > 7 \
+            #         or len(item['condensed']) > 1 \
+            #         or len(item['core']) > 0:
+            #         result.append(Cloudlet( n, t, item, MC))
+            #         n += 1
+            for i, id in enumerate(ids):
+                if len(cloudlet[id]['plume']) > 7 \
+                    or len(cloudlet[id]['condensed']) > 1 \
+                    or len(cloudlet[id]['core']) > 0:
+                    result.append(Cloudlet( n, t, cloudlet[id], MC))
                     n += 1
 
     return result, MC
@@ -367,15 +378,17 @@ def save_clusters(clusters, t, MC):
             f.attrs[item] = MC[item]
 
         for id, clust in clusters.items():
+            vlen_str = h5py.special_dtype(vlen=str)
+
             grp = f.create_group(str(id))
             grp.create_dataset('past_connections', \
-                                data=np.unique(list(clust.past_connections)).astype(np.string_))
+                                data=np.array(list(clust.past_connections)))
             grp.create_dataset('merge_connections', \
-                                data=np.unique(list(clust.merge_connections)).astype(np.string_))
+                                data=np.array(list(clust.merge_connections)))
             grp.create_dataset('split_connections', \
-                                data=np.unique(list(clust.split_connections)).astype(np.string_)) 
+                                data=np.array(list(clust.split_connections)))
             grp.create_dataset('events', \
-                                data=np.unique(list(clust.events)).astype(np.string_))
+                                data=np.array(clust.events, dtype=np.string_), dtype=vlen_str)
 
             grp.create_dataset('core', data=clust.core_mask())
             grp.create_dataset('condensed', data=clust.condensed_mask())
