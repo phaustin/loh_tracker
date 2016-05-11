@@ -219,17 +219,17 @@ def find_cloudlets(time, core, condensed, plume, u, v, w, MC):
 
         # Filter out noisy cloud region
         for n in range(len(cloudlets)):
-            if (cloudlets[n]['plume'].size > 8
-                or (cloudlets[n]['condensed'].size > 1)
-                or (cloudlets[n]['core'].size > 0)):
+            # if (cloudlets[n]['plume'].size > 7
+            #     or (cloudlets[n]['condensed'].size > 1)
+            #     or (cloudlets[n]['core'].size > 0)):
 
-                grp = f.require_group(str(n))
-                for var in cloudlet_items:
-                    if(var in ['core', 'condensed', 'plume']):
-                        dset = grp.create_dataset(var, \
-                                data=cloudlets[n][var][...])
-                    else:
-                        dset = grp.create_dataset(var, data=cloudlets[n][var])
+            grp = f.require_group(str(n))
+            for var in cloudlet_items:
+                if(var in ['core', 'condensed', 'plume']):
+                    dset = grp.create_dataset(var, \
+                            data=cloudlets[n][var][...])
+                else:
+                    dset = grp.create_dataset(var, data=cloudlets[n][var])
 
     return 
 
@@ -250,12 +250,12 @@ def load_data(ds):
     MC['ny'] = ds.y.size
     MC['nz'] = ds.z.size
 
-    MC['dx'] = ds.indexes['x'][1] - ds.indexes['x'][0]
-    MC['dy'] = ds.indexes['y'][1] - ds.indexes['y'][0]
-    MC['dz'] = ds.indexes['z'][1] - ds.indexes['z'][0]
+    MC['dx'] = int(ds.indexes['x'][1] - ds.indexes['x'][0])
+    MC['dy'] = int(ds.indexes['y'][1] - ds.indexes['y'][0])
+    MC['dz'] = int(ds.indexes['z'][1] - ds.indexes['z'][0])
     MC['dt'] = 60 
 
-    MC['ug'] = -8.
+    MC['ug'] = 0.
     MC['vg'] = 0.
 
     return core, condensed, plume, u, v, w, MC
