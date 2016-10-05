@@ -4,6 +4,7 @@
 *.pbs
 *.lprof
 *.txt
+*.json
 
 /data
 
