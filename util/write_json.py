@@ -5,30 +5,30 @@ def main():
     json_dict = {}
 
     #---- BOMEX 
-    json_dict['case_name'] = 'BOMEX'
-    json_dict['config'] = {}
+    # json_dict['case_name'] = 'BOMEX'
+    # json_dict['config'] = {}
 
-    stat_file = 'BOMEX_256x256x128_25m_25m_1s_stat.nc'
+    # stat_file = 'BOMEX_256x256x128_25m_25m_1s_stat.nc'
 
-    json_dict['location'] = '/newtera/loh/data/BOMEX'
+    # json_dict['location'] = '/newtera/loh/data/BOMEX'
 
-    json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-    json_dict['core'] = '%s/core_entrain' % json_dict['location']
-    json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
-    json_dict['tracking'] = '%s/tracking' % json_dict['location']
-    json_dict['variables'] = '%s/variables' % json_dict['location']
+    # json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
+    # json_dict['core'] = '%s/core_entrain' % json_dict['location']
+    # json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
+    # json_dict['tracking'] = '%s/tracking' % json_dict['location']
+    # json_dict['variables'] = '%s/variables' % json_dict['location']
 
-    # Model parameters
-    json_dict['config']['nx'] = 256
-    json_dict['config']['ny'] = 256
-    json_dict['config']['nz'] = 128
-    json_dict['config']['nt'] = 180
+    # # Model parameters
+    # json_dict['config']['nx'] = 256
+    # json_dict['config']['ny'] = 256
+    # json_dict['config']['nz'] = 128
+    # json_dict['config']['nt'] = 180
 
-    json_dict['config']['dx'] = 25
-    json_dict['config']['dt'] = 60
+    # json_dict['config']['dx'] = 25
+    # json_dict['config']['dt'] = 60
 
-    json_dict['config']['ug'] = -8.
-    json_dict['config']['vg'] = 0.
+    # json_dict['config']['ug'] = -8.
+    # json_dict['config']['vg'] = 0.
 
 
     #---- CGILS_300K
@@ -112,32 +112,33 @@ def main():
     # json_dict['GCSSARM']['config']['vg'] = 0.
 
 
-    #---- GATE_BDL
-    # json_dict['GATE_BDL'] = OrderedDict()
-    # json_dict['GATE_BDL']['config'] = OrderedDict()
+    #---- GATE
+    json_dict['case_name'] = 'GATE'
+    json_dict['config'] = {}
 
-    # json_dict['GATE_BDL']['location'] = '/newtera/loh/data/GATE_BDL'
+    json_dict['location'] = '/newtera/loh/data/GATE_BDL'
 
-    # stat_file = 'GATE_1920x1920x512_50m_1s_ent_stat.nc'
+    stat_file = 'GATE_1920x1920x512_50m_1s_ent_stat.nc'
 
-    # json_dict['GATE_BDL']['condensed'] = '%s/condensed_entrain' % json_dict['GATE_BDL']['location']
-    # json_dict['GATE_BDL']['core'] = '%s/core_entrain' % json_dict['GATE_BDL']['location']
-    # json_dict['GATE_BDL']['stat_file'] = '%s/%s' % (json_dict['GATE_BDL']['location'], stat_file)
-    # json_dict['GATE_BDL']['tracking'] = '%s/tracking' % json_dict['GATE_BDL']['location']
-    # json_dict['GATE_BDL']['variables'] = '%s/variables' % json_dict['GATE_BDL']['location']
+    json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
+    json_dict['core'] = '%s/core_entrain' % json_dict['location']
+    json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
+    json_dict['tracking'] = '%s/tracking' % json_dict['location']
+    json_dict['variables'] = '%s/variables' % json_dict['location']
 
-    # # Model parameters
-    # json_dict['GATE_BDL']['config']['nx'] = 1728
-    # json_dict['GATE_BDL']['config']['ny'] = 1728
-    # json_dict['GATE_BDL']['config']['nz'] = 80
-    # json_dict['GATE_BDL']['config']['nt'] = 180
+    # Model parameters
+    json_dict['config']['nx'] = 1728
+    json_dict['config']['ny'] = 1728
+    json_dict['config']['nz'] = 320
+    json_dict['config']['nt'] = 180
 
-    # json_dict['GATE_BDL']['config']['dx'] = 50
-    # json_dict['GATE_BDL']['config']['dt'] = 60
+    json_dict['config']['dx'] = 50
+    json_dict['config']['dt'] = 60
 
-    # json_dict['GATE_BDL']['config']['ug'] = -8.
-    # json_dict['GATE_BDL']['config']['vg'] = 0.
+    json_dict['config']['ug'] = -8.
+    json_dict['config']['vg'] = 0.
 
+    # Output JSON configuration file 
     with open('config.json','w') as f:
         json.dump(json_dict, f,indent=1)
         print('Wrote {} using util.write_json'.format('config.json'))
