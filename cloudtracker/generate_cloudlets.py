@@ -233,16 +233,16 @@ def find_cloudlets(time, core, condensed, plume, u, v, w, MC):
 
     return 
 
-def load_data(ds):
-    core = ds.variables['core'][:].astype(bool)
-    condensed = ds.variables['condensed'][:].astype(bool)
-    plume = ds.variables['plume'][:].astype(bool)
-    u = ds.variables['u'][:].astype(np.float)
-    v = ds.variables['v'][:].astype(np.float)
-    w = ds.variables['w'][:].astype(np.float)
+def load_data(time, ds):
+    core = ds.core.values.copy()
+    condensed = ds.condensed.values.copy()
+    plume = ds.plume.values.copy()
+    u = ds.u
+    v = ds.v
+    w = ds.w
 
     MC = {}
-    MC['time'] = int(ds.time)
+    MC['time'] = int(time)
 
     # TODO: These should directly be read from the tracking files as attributes
     #       Left as is for now as this requires re-producing all tracking files
@@ -253,9 +253,9 @@ def load_data(ds):
     MC['dx'] = int(ds.indexes['x'][1] - ds.indexes['x'][0])
     MC['dy'] = int(ds.indexes['y'][1] - ds.indexes['y'][0])
     MC['dz'] = int(ds.indexes['z'][1] - ds.indexes['z'][0])
-    MC['dt'] = 60 
+    MC['dt'] = 60
 
-    MC['ug'] = 0.
+    MC['ug'] = -8.
     MC['vg'] = 0.
 
     return core, condensed, plume, u, v, w, MC
@@ -265,7 +265,7 @@ def generate_cloudlets(input_directory):
         concat_dim="time", chunks=1000)
 
     for time in range(len(ds.time)):
-        core, condensed, plume, u, v, w, MC = load_data(ds.isel(time=time))
+        core, condensed, plume, u, v, w, MC = load_data(time, ds.isel(time=time))
         find_cloudlets(time, core, condensed, plume, u, v, w, MC)
     
 if __name__ == "__main__":
