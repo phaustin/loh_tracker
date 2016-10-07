@@ -116,7 +116,7 @@ def main():
     json_dict['case_name'] = 'GATE'
     json_dict['config'] = {}
 
-    json_dict['location'] = '/newtera/loh/data/GATE_BDL'
+    json_dict['location'] = '/newtera/loh/data/GATE'
 
     stat_file = 'GATE_1920x1920x512_50m_1s_ent_stat.nc'
 
