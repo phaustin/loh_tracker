@@ -20,7 +20,7 @@ def theta(p, T): return T*(p_0/p)**(Rd/cp)
 def theta_v(p, T, qv, qn, qp):
     return theta(p, T_v(T, qv, qn, qp))
 
-def generate_tracking(ds):
+def generate_tracking(time, ds):
     dn = xray.Dataset(
         {
             'u': (ds.U.dims, ds.U, ds.U.attrs),
@@ -42,12 +42,15 @@ def generate_tracking(ds):
     dn['condensed'] = (ds.W.dims, (ds.QN > 0.))
     dn['plume'] = (ds.W.dims, (ds.W > 0.))
 
-    time, datasets = zip(*dn.groupby('time'))
-    # dest = model_config['location'] + '/tracking_input'
     dest = 'data'
-    paths = ['%s/cloudtracker_input_%08g.nc' % (dest, t) \
-                            for t in np.arange(len(time))]
-    xray.save_mfdataset(datasets, paths)
+    dn.to_netcdf('%s/cloudtracker_input_%08g.nc' % (dest, time))
+
+    # time, datasets = zip(*dn.groupby('time'))
+    # # dest = model_config['location'] + '/tracking_input'
+    # dest = 'data'
+    # paths = ['%s/cloudtracker_input_%08g.nc' % (dest, t) \
+    #                         for t in np.arange(len(time))]
+    # xray.save_mfdataset(datasets, paths)
 
 
 def main():
@@ -58,7 +61,9 @@ def main():
     filelist = sorted(glob.glob('%s/*.nc' % model_config['variables']))
     with xray.open_mfdataset(filelist, concat_dim="time") as ds:
         print(ds)
-        generate_tracking(ds)
+
+        for time in range(len(ds.time)):
+            generate_tracking(time, ds.isel(time=time))
 
 if __name__ == "__main__":
     main()
