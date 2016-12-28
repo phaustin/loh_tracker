@@ -181,4 +181,6 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         main(sys.argv[-1])
     else:
-        raise ValueError('Case name is not given: e.g. python write_json.py BOMEX')
+        print("Missing parameter")
+        print("For example, run python write_json.py BOMEX")
+        raise ValueError('Case name is not given')
