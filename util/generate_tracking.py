@@ -1,8 +1,7 @@
-import os, sys, glob
+import glob
 import numpy as np
-import xray, dask, h5py, json
-
-from netCDF4 import Dataset as nc
+import xray
+import json
 
 cp = 1004.    # Heat capacity at constant pressure for dry air [J kg^-1 K^-1]
 Rv = 461.      # Gas constant of water vapor [J kg^-1 K^-1]
@@ -28,14 +27,13 @@ def generate_tracking(time, ds):
             'w': (ds.W.dims, ds.W, ds.W.attrs),
         },
         coords=ds.coords)
-
     try:
         qp = ds.qp
     except:
         qp = 0
     thetav = theta_v((ds.p * 100.),
-                    ds.TABS, ds.QV / 1e3, 
-                    ds.QN / 1e3, qp / 1e3)
+                     ds.TABS, ds.QV / 1e3,
+                     ds.QN / 1e3, qp / 1e3)
     buoy = thetav > np.mean(thetav, axis=(2, 3))
 
     dn['core'] = (ds.W.dims, buoy & (ds.W > 0.) & (ds.QN > 0.))
