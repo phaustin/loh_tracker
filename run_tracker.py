@@ -1,11 +1,16 @@
-import sys
-from cloudtracker import main
-    
-def run_tracker(input_dir):
-    print( " Running the cloud-tracking algorithm... " )
-    print( " Input dir: \"" + input_dir + "\" \n" )
+import sys, json
 
-    main.main(input_dir)
+from cloudtracker import main as tracker_main
+    
+def run_tracker(input):
+    print( " Running the cloud-tracking algorithm... " )
+    print( " Input dir: \"" + input + "\" \n" )
+
+    # Read .json configuration file
+    with open('model_config.json', 'r') as json_file:
+        config = json.load(json_file)
+
+    tracker_main.main(input, config)
 
     print( "\n Entrainment analysis completed " )
 
