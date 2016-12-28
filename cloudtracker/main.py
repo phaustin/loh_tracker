@@ -7,22 +7,24 @@ from .cluster_cloudlets import cluster_cloudlets
 from .make_graph import make_graph
 from .output_cloud_data import output_cloud_data
 
-def main(input_dir, save_all=True):
+global MC
+
+def main(input, config, save_all=True):
     sys.setrecursionlimit(1000000)
 
-    if not os.path.exists('cloudtracker/output'):
-        os.mkdir('cloudtracker/output')
     if not os.path.exists('cloudtracker/hdf5'):
         os.mkdir('cloudtracker/hdf5')
+
+    # Model configuration dict
+    MC = config
 
 #----cloudlets----
 
     print( " Gathering cloudlets... " )
 
-    generate_cloudlets(input_dir)
+    generate_cloudlets(input)
 
 #----cluster----
-
     print( "\n Creating clusters... " )
 
     cluster_cloudlets()
@@ -44,7 +46,7 @@ def main(input_dir, save_all=True):
             
 #----output----
     
-    for n in range(nt):
+    for n in range(510):
         print("\n Outputting cloud data, time step: %d" % n)
-        output_cloud_data(cloud_graphs, cloud_noise, n)
+        output_cloud_data(cloud_graphs, cloud_noise)
             
