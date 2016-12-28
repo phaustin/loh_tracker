@@ -72,16 +72,16 @@ def calculate_data(cluster, MC):
     condensed_shell = calc_shell(condensed, MC)
     result['condensed_shell'] = condensed_shell
     condensed_edge = calc_edge(condensed, condensed_shell, MC)
-    # result['condensed_edge'] = condensed_edge
-    # result['condensed_env'] = calc_env(condensed, condensed_shell, condensed_edge, MC)
+    result['condensed_edge'] = condensed_edge
+    result['condensed_env'] = calc_env(condensed, condensed_shell, condensed_edge, MC)
 
     core = cluster['core']
     result['core'] = core
     core_shell = calc_shell(core, MC)
     result['core_shell'] = core_shell
     core_edge = calc_edge(core, core_shell, MC)
-    # result['core_edge'] = core_edge
-    # result['core_env'] = calc_env(core, core_shell, core_edge, MC)
+    result['core_edge'] = core_edge
+    result['core_env'] = calc_env(core, core_shell, core_edge, MC)
 
     return result
 
