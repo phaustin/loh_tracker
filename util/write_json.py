@@ -1,5 +1,7 @@
-from collections import OrderedDict
+import sys
+
 import json, pprint
+from collections import OrderedDict
 
 
 def main(case_name):
@@ -176,4 +178,7 @@ def main(case_name):
         pp.pprint(json_dict)
 
 if __name__ == '__main__':
-    main('BOMEX')
+    if len(sys.argv) == 2:
+        main(sys.argv[-1])
+    else:
+        raise ValueError('Case name is not given: e.g. python write_json.py BOMEX')
