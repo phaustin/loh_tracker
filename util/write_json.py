@@ -170,6 +170,8 @@ def main(case_name):
 
         json_dict['config']['ug'] = -8.
         json_dict['config']['vg'] = 0.
+    else:
+        raise ValueError('Case name not found')
 
 
     with open('model_config.json','w') as f:
