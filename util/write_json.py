@@ -8,16 +8,17 @@ def main(case_name):
         json_dict = {}
         json_dict['config'] = {}
 
-        json_dict['case_name'] = case_name
-        json_dict['location'] = '/newtera/loh/data/BOMEX'
-
         stat_file = 'BOMEX_256x256x128_25m_25m_1s_stat.nc'
+        location = '/newtera/loh/data/BOMEX'
 
-        json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-        json_dict['core'] = '%s/core_entrain' % json_dict['location']
-        json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
-        json_dict['tracking'] = '%s/tracking' % json_dict['location']
-        json_dict['variables'] = '%s/variables' % json_dict['location']
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
+
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
+        json_dict['tracking'] = '%s/tracking' % location
+        json_dict['variables'] = '%s/variables' % location
 
         # Model parameters
         json_dict['config']['nx'] = 256
@@ -36,16 +37,17 @@ def main(case_name):
         json_dict = {}
         json_dict['config'] = {}
 
-        json_dict['case_name'] = case_name
-        json_dict['location'] = '/newtera/loh/data/CGILS_300K'
-
         stat_file = 'ENT_CGILS_S6_IDEAL_3D_SST_300K_384x384x194_25m_1s_stat.nc'
+        location = '/newtera/loh/data/CGILS_300K'
+
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
         
-        json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-        json_dict['core'] = '%s/core_entrain' % json_dict['location']
-        json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
-        json_dict['tracking'] = '%s/tracking' % json_dict['location']
-        json_dict['variables'] = '%s/variables' % json_dict['location']
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
+        json_dict['tracking'] = '%s/tracking' % location
+        json_dict['variables'] = '%s/variables' % location
 
         # Model parameters
         json_dict['config']['nt'] = 360
@@ -64,16 +66,17 @@ def main(case_name):
         json_dict = {}
         json_dict['config'] = {}
 
-        json_dict['case_name'] = case_name
-        json_dict['location'] = '/newtera/loh/data/CGILS_301K'
-
         stat_file = 'ENT_CGILS_S6_IDEAL_3D_SST_301K_384x384x194_25m_1s_stat.nc'
+        location = '/newtera/loh/data/CGILS_301K'
+
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
         
-        json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-        json_dict['core'] = '%s/core_entrain' % json_dict['location']
-        json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
-        json_dict['tracking'] = '%s/tracking' % json_dict['location']
-        json_dict['variables'] = '%s/variables' % json_dict['location']
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
+        json_dict['tracking'] = '%s/tracking' % location
+        json_dict['variables'] = '%s/variables' % location
 
         # Model parameters
         json_dict['config']['nt'] = 360
@@ -92,16 +95,17 @@ def main(case_name):
         json_dict = {}
         json_dict['config'] = {}
 
-        json_dict['case_name'] = case_name
-        json_dict['location'] = '/newtera/loh/data/GCSSARM'
-
         stat_file = 'GCSSARM_256x256x208_25m_25m_1s_stat.nc'
+        location = '/newtera/loh/data/GCSSARM'
 
-        json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-        json_dict['core'] = '%s/core_entrain' % json_dict['location']
-        json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
-        json_dict['tracking'] = '%s/tracking' % json_dict['location']
-        json_dict['variables'] = '%s/variables' % json_dict['location']
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
+
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
+        json_dict['tracking'] = '%s/tracking' % location
+        json_dict['variables'] = '%s/variables' % location
 
         # Model parameters
         json_dict['config']['nx'] = 256
@@ -120,16 +124,17 @@ def main(case_name):
         json_dict = {}
         json_dict['config'] = {}
 
-        json_dict['case_name'] = case_name
-        json_dict['location'] = '/newtera/loh/data/GATE_BDL'
-
         stat_file = 'GATE_1920x1920x512_50m_1s_ent_stat.nc'
+        location = '/newtera/loh/data/GATE_BDL'
 
-        json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-        json_dict['core'] = '%s/core_entrain' % json_dict['location']
-        json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
-        json_dict['tracking'] = '%s/tracking' % json_dict['location']
-        json_dict['variables'] = '%s/variables' % json_dict['location']
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
+
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
+        json_dict['tracking'] = '%s/tracking' % location
+        json_dict['variables'] = '%s/variables' % location
 
         # Model parameters
         json_dict['config']['nx'] = 1728
@@ -148,16 +153,17 @@ def main(case_name):
         json_dict = {}
         json_dict['config'] = {}
 
-        json_dict['location'] = '/newtera/loh/data/GATE'
-
         stat_file = 'GATE_1920x1920x512_50m_1s_ent_stat.nc'
+        location = '/newtera/loh/data/GATE'
 
-        json_dict['condensed'] = '%s/condensed_entrain' % json_dict['location']
-        json_dict['core'] = '%s/core_entrain' % json_dict['location']
-        json_dict['stat_file'] = '%s/%s' % (json_dict['location'], stat_file)
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
+
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
         json_dict['tracking'] = '/tera/loh/cloudtracker/cloudtracker/hdf5'
-        # json_dict['tracking'] = '%s/tracking' % json_dict['location']
-        json_dict['variables'] = '%s/variables' % json_dict['location']
+        json_dict['variables'] = '%s/variables' % location
 
         # Model parameters
         json_dict['config']['nx'] = 1728
