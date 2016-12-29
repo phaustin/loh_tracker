@@ -1,16 +1,12 @@
-import sys
-
-import json, pprint
-from collections import OrderedDict
-
+import sys, json, pprint
 
 def main(case_name):
-    json_dict = OrderedDict()
+    json_dict = {}
 
     if case_name == 'BOMEX':
         #---- BOMEX 
-        json_dict['BOMEX'] = OrderedDict()
-        json_dict['BOMEX']['config'] = OrderedDict()
+        json_dict['BOMEX'] = {}
+        json_dict['BOMEX']['config'] = {}
 
         json_dict['BOMEX']['location'] = '/newtera/loh/data/BOMEX'
 
@@ -36,8 +32,8 @@ def main(case_name):
 
     elif case_name == 'CGILS_300K':
         #---- CGILS_300K
-        json_dict['CGILS_300K'] = OrderedDict()
-        json_dict['CGILS_300K']['config'] = OrderedDict()
+        json_dict['CGILS_300K'] = {}
+        json_dict['CGILS_300K']['config'] = {}
 
         json_dict['CGILS_300K']['location'] = '/newtera/loh/data/CGILS_300K'
 
@@ -63,8 +59,8 @@ def main(case_name):
 
     elif case_name == 'CGILS_301K':
         #---- CGILS_301K
-        json_dict['CGILS_301K'] = OrderedDict()
-        json_dict['CGILS_301K']['config'] = OrderedDict()
+        json_dict['CGILS_301K'] = {}
+        json_dict['CGILS_301K']['config'] = {}
 
         json_dict['CGILS_301K']['location'] = '/newtera/loh/data/CGILS_301K'
 
@@ -90,8 +86,8 @@ def main(case_name):
 
     elif case_name == 'GCSSARM':
         #---- GCSSARM
-        json_dict['GCSSARM'] = OrderedDict()
-        json_dict['GCSSARM']['config'] = OrderedDict()
+        json_dict['GCSSARM'] = {}
+        json_dict['GCSSARM']['config'] = {}
 
         json_dict['GCSSARM']['location'] = '/newtera/loh/data/GCSSARM'
 
@@ -117,8 +113,8 @@ def main(case_name):
 
     elif case_name == 'GATE_BDL':
         #---- GATE_BDL
-        json_dict['GATE_BDL'] = OrderedDict()
-        json_dict['GATE_BDL']['config'] = OrderedDict()
+        json_dict['GATE_BDL'] = {}
+        json_dict['GATE_BDL']['config'] = {}
 
         json_dict['GATE_BDL']['location'] = '/newtera/loh/data/GATE_BDL'
 
@@ -144,8 +140,8 @@ def main(case_name):
 
     elif case_name == 'GATE':
         #---- GATE
-        json_dict['GATE'] = OrderedDict()
-        json_dict['GATE']['config'] = OrderedDict()
+        json_dict['GATE'] = {}
+        json_dict['GATE']['config'] = {}
 
         json_dict['GATE']['location'] = '/newtera/loh/data/GATE'
 
@@ -182,5 +178,5 @@ if __name__ == '__main__':
         main(sys.argv[-1])
     else:
         print("Missing parameter")
-        print("For example, run python write_json.py BOMEX")
+        print("For example, run python write_json.py BOMEX \n")
         raise ValueError('Case name is not given')
