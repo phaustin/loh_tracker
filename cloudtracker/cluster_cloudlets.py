@@ -11,12 +11,15 @@ import dask.array as da
 
 from .cloud_objects import Cloudlet, Cluster
 from .utility_functions import index_to_zyx, zyx_to_index
+from .load_config import c
 
-saveit = True
+nx = c.nx
+ny = c.ny
+nz = c.nz
 
 #--------------------------
 
-def make_spatial_cloudlet_connections(cloudlets, MC):
+def make_spatial_cloudlet_connections(cloudlets):
     # Find all the cloudlets which have adjacent cores or plumes
     # Store the information in the cloudlet.adjacent dict.
     
@@ -25,8 +28,8 @@ def make_spatial_cloudlet_connections(cloudlets, MC):
     # Then it pulls the edge points from these 3d arrays
     # to see if the cloudlets are bordering other cloudlets
     
-    condensed_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), dtype=np.int)
-    plume_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), dtype=np.int)
+    condensed_array = -1*np.ones((nz * ny * nx,), dtype=np.int)
+    plume_array = -1*np.ones((nz * ny * nx,), dtype=np.int)
 
     # label the cloud core and plume points using the list index of the
     # cloudlet
@@ -61,20 +64,19 @@ def make_spatial_cloudlet_connections(cloudlets, MC):
 
 #-----------------
 
-def advect_indexes(indexes, u, v, w, MC):
-    K_J_I = index_to_zyx(indexes, MC['nz'], MC['ny'], MC['nx'])
+def advect_indexes(indexes, u, v, w):
+    K_J_I = index_to_zyx(indexes)
 
     K_J_I[0][:] = K_J_I[0][:] - w
     K_J_I[1][:] = K_J_I[1][:] - v
     K_J_I[2][:] = K_J_I[2][:] - u
                                
-    K_J_I[0][K_J_I[0][:] >= MC['nz']] = MC['nz']-1
+    K_J_I[0][K_J_I[0][:] >= nz] = nz-1
     K_J_I[0][K_J_I[0][:] < 0] = 0
-    K_J_I[1][:] = K_J_I[1][:] % MC['ny']
-    K_J_I[2][:] = K_J_I[2][:] % MC['nx']
+    K_J_I[1][:] = K_J_I[1][:] % ny
+    K_J_I[2][:] = K_J_I[2][:] % nx
 
-    advected_indexes = zyx_to_index(K_J_I[0][:], K_J_I[1][:], K_J_I[2][:], \
-                                    MC['nz'], MC['ny'], MC['nx'])
+    advected_indexes = zyx_to_index(K_J_I[0][:], K_J_I[1][:], K_J_I[2][:])
     
     return advected_indexes
 
@@ -86,11 +88,11 @@ def count_overlaps(key, overlaps, cloudlet):
     for n, index in enumerate(indexes):
         cloudlet.overlap[key].append( (bin_count[n],  index) )
 
-def make_temporal_connections(cloudlets, old_clusters, MC):
+def make_temporal_connections(cloudlets, old_clusters):
     # For each cloudlet, find the previous time's
     # cluster that overlaps the cloudlet the most
-    condensed_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), np.int)
-    plume_array = -1*np.ones((MC['nz']*MC['ny']*MC['nx'],), np.int)
+    condensed_array = -1*np.ones((nz * ny * nx,), np.int)
+    plume_array = -1*np.ones((nz * ny * nx,), np.int)
 
     # label the cloud core and plume points using the list index of the
     # cloud cluster
@@ -105,8 +107,7 @@ def make_temporal_connections(cloudlets, old_clusters, MC):
             advected_condensed_mask = advect_indexes(cloudlet.condensed_mask(),
                                                 cloudlet.u['condensed'],
                                                 cloudlet.v['condensed'],
-                                                cloudlet.w['condensed'],
-                                                MC)
+                                                cloudlet.w['condensed'])
 
             # Get indexes of previous cores from the advected array
             overlapping_condenseds = condensed_array[advected_condensed_mask]
@@ -126,8 +127,7 @@ def make_temporal_connections(cloudlets, old_clusters, MC):
         advected_plume_mask = advect_indexes(cloudlet.plume_mask(),
                                              cloudlet.u['plume'],
                                              cloudlet.v['plume'],
-                                             cloudlet.w['plume'],
-                                             MC)
+                                             cloudlet.w['plume'])
                                              
         overlapping_condenseds = condensed_array[advected_plume_mask]
         overlapping_condenseds = overlapping_condenseds[overlapping_condenseds > -1]
@@ -146,7 +146,7 @@ def make_temporal_connections(cloudlets, old_clusters, MC):
             
 #---------------------
 
-def create_new_clusters(cloudlets, clusters, max_id, MC):
+def create_new_clusters(cloudlets, clusters, max_id):
     core_list = []
     condensed_list = []
     plume_list = []
@@ -163,7 +163,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
     # Make clusters out of the cloudlets with core points
     while core_list:
         cloudlet = core_list.pop()
-        cluster = Cluster(max_id, [cloudlet], MC)
+        cluster = Cluster(max_id, [cloudlet])
         cluster.events.append('NCOR')
         # Add cloudlets with adjactent clouds to the cluster
         # Adding cloudlets may bring more cloudlets into cloud
@@ -185,7 +185,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
     # Make clusters out of the cloudlets without core points
     while condensed_list:
         cloudlet = condensed_list.pop()
-        cluster = Cluster(max_id, [cloudlet], MC)
+        cluster = Cluster(max_id, [cloudlet])
         cluster.events.append('NCLD')
 
         clusters[max_id] = cluster
@@ -194,7 +194,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
     # Make clusters out of the cloudlets without core points
     while plume_list:
         cloudlet = plume_list.pop()
-        cluster = Cluster(max_id, [cloudlet], MC)
+        cluster = Cluster(max_id, [cloudlet])
         cluster.events.append('NP')
 
         clusters[max_id] = cluster
@@ -204,7 +204,7 @@ def create_new_clusters(cloudlets, clusters, max_id, MC):
 
 #---------------------
 
-def associate_cloudlets_with_previous_clusters(cloudlets, old_clusters, MC):
+def associate_cloudlets_with_previous_clusters(cloudlets, old_clusters):
     clusters = {}
     new_cloudlets = []
 
@@ -243,7 +243,7 @@ def associate_cloudlets_with_previous_clusters(cloudlets, old_clusters, MC):
             if max_conn in clusters:
                 clusters[max_conn].add_cloudlet(cloudlet)
             else:
-                clusters[max_conn] = Cluster(max_conn, [cloudlet], MC)
+                clusters[max_conn] = Cluster(max_conn, [cloudlet])
                 clusters[max_conn].events.append('O%d' % max_conn)
                 clusters[max_conn].past_connections.add(max_conn)
             for conn in back_conns:
@@ -272,7 +272,7 @@ def check_for_adjacent_cloudlets(new_cloudlets, clusters):
 
 #---
 
-def split_clusters(clusters, max_id, MC):
+def split_clusters(clusters, max_id):
     for cluster in list(clusters.values()):
         groups = cluster.connected_cloudlet_groups()
         if len(groups) > 1:
@@ -288,7 +288,7 @@ def split_clusters(clusters, max_id, MC):
             # Turn the smaller groups into new clusters
             for size, group in sizes[:-1]:
                 cluster.remove_cloudlets(group)
-                new_cluster = Cluster(max_id, group, MC)
+                new_cluster = Cluster(max_id, group)
                 new_cluster.events.append('S%d' % cluster.id)
                 new_cluster.split_connections.add(cluster.id)
                 clusters[max_id] = new_cluster
@@ -298,26 +298,26 @@ def split_clusters(clusters, max_id, MC):
                 
 #----------
 
-def make_clusters(cloudlets, old_clusters, MC):
+def make_clusters(cloudlets, old_clusters):
     # make_clusters generates a dictionary of clusters
 
     max_id = max(old_clusters.keys()) + 1
 
     # Find the horizontal connections between cloudlets
-    make_spatial_cloudlet_connections(cloudlets, MC)
+    make_spatial_cloudlet_connections(cloudlets)
 
     # associate cloudlets with previous timestep clusters
     # cloudlets that can't be associated are assumed to be newly created
-    new_cloudlets, current_clusters = associate_cloudlets_with_previous_clusters(cloudlets, old_clusters, MC)
+    new_cloudlets, current_clusters = associate_cloudlets_with_previous_clusters(cloudlets, old_clusters)
 
     # See if any of the new cloudlets are touching a cluster
     check_for_adjacent_cloudlets(new_cloudlets, current_clusters)
 
     # See if the cloudlets in a cluster are no longer touching
-    max_id = split_clusters(current_clusters, max_id, MC)
+    max_id = split_clusters(current_clusters, max_id)
 
     # Create new clusters from any leftover new cloudlets
-    final_clusters = create_new_clusters(new_cloudlets, current_clusters, max_id, MC)
+    final_clusters = create_new_clusters(new_cloudlets, current_clusters, max_id)
 
     return final_clusters
 
@@ -335,12 +335,7 @@ def filter_cloudlets(cloudlet):
 
 # @profile
 def load_cloudlets(t):
-    attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
     with h5py.File( 'cloudtracker/hdf5/cloudlets_%08g.h5' % t) as cloudlets:
-        MC = {}
-        for item in attribute_items:
-            MC[item] = cloudlets.attrs[item] 
-
         cloudlet = {}
         result = []
         n = 0
@@ -357,26 +352,21 @@ def load_cloudlets(t):
             #     if len(item['plume']) > 7 \
             #         or len(item['condensed']) > 1 \
             #         or len(item['core']) > 0:
-            #         result.append(Cloudlet( n, t, item, MC))
+            #         result.append(Cloudlet( n, t, item))
             #         n += 1
             for i, id in enumerate(ids):
                 if len(cloudlet[id]['plume']) > 7 \
                     or len(cloudlet[id]['condensed']) > 1 \
                     or len(cloudlet[id]['core']) > 0:
-                    result.append(Cloudlet( n, t, cloudlet[id], MC))
+                    result.append(Cloudlet( n, t, cloudlet[id]))
                     n += 1
 
-    return result, MC
+    return result
 
-def save_clusters(clusters, t, MC):
+def save_clusters(clusters, t):
     new_clusters = {}
 
-    attribute_items = ['time', 'nx', 'ny', 'nz', 'dx', 'dy', 'dz', 'dt', 'ug', 'vg']
     with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, "w") as f:
-        # Save model parameters 
-        for item in attribute_items:
-            f.attrs[item] = MC[item]
-
         for id, clust in clusters.items():
             vlen_str = h5py.special_dtype(vlen=str)
 
@@ -394,33 +384,29 @@ def save_clusters(clusters, t, MC):
             grp.create_dataset('condensed', data=clust.condensed_mask())
             grp.create_dataset('plume', data=clust.plume_mask())
 
-    # NOTE: Ignore cluster_objects
-    #cPickle.dump(clusters, open('pkl/cluster_objects_%08g.pkl' % t, 'wb'))
-
-# @profile
 def cluster_cloudlets():
     print(" \tcluster cloudlets; time step: 0 ")
-    cloudlets, MC = load_cloudlets(0)    
-    make_spatial_cloudlet_connections( cloudlets, MC )
-    new_clusters = create_new_clusters(cloudlets, {}, 0, MC)
+    cloudlets = load_cloudlets(0)    
+    make_spatial_cloudlet_connections(cloudlets)
+    new_clusters = create_new_clusters(cloudlets, {}, 0)
     print(" \tFound %d clusters\n " % len(new_clusters))
-    save_clusters(new_clusters, 0, MC)
+    save_clusters(new_clusters, 0)
     
     for t in range(1, len(glob.glob('cloudtracker/hdf5/cloudlets_*.h5'))):
         print(" \tcluster cloudlets; time step: %d " % t)
         old_clusters = new_clusters
-        cloudlets, MC = load_cloudlets(t)
+        cloudlets = load_cloudlets(t)
 
         # Finds the ids of all the previous timestep's cloudlets that overlap
         # the current timestep's cloudlets.
-        make_temporal_connections(cloudlets, old_clusters, MC)
+        make_temporal_connections(cloudlets, old_clusters)
 
         # Uses the previous timestep overlap info to group
         # current cloudlets into clusters.
-        new_clusters = make_clusters(cloudlets, old_clusters, MC)
+        new_clusters = make_clusters(cloudlets, old_clusters)
         print(" \tFound %d clusters\n " % len(new_clusters))
 
-        save_clusters(new_clusters, t, MC)
+        save_clusters(new_clusters, t)
 
 if __name__ == "__main__":
     main()

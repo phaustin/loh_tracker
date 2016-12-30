@@ -1,48 +1,47 @@
 import numpy as np
 
-import numba
-from numba import int64
+from .load_config import c
+
+nx = c.nx
+ny = c.ny
+nz = c.nz
 
 #---------------------------------
 
-@numba.jit(nopython=True, nogil=True)
-def index_to_zyx(index, nz, ny, nx):
-    z = np.floor_divide(index, (ny*nx))
-    index = np.mod(index, (ny*nx))
+def index_to_zyx(index):
+    z = np.floor_divide(index, (ny * nx))
+    index = np.mod(index, (ny * nx))
     y = np.floor_divide(index, (nx))
     x = np.mod(index, nx)
     return (z, y, x)
 
 # @numba.jit
-# def index_to_zyx(index, nz, ny, nx):
+# def index_to_zyx(index):
 #     z = index // (ny*nx)
 #     index = index % (ny*nx)
 #     y = index // nx
 #     x = index % nx
 #     return (z, y, x)
 
-@numba.jit(nopython=True, nogil=True)
-def zyx_to_index(z, y, x, nz, ny, nx):
-    return (ny*nx*z + nx*y + x)
+def zyx_to_index(z, y, x):
+    return (ny * nx * z + nx * y + x)
 
 #---------------------------------
 
-@numba.jit(nopython=True, nogil=True)
-def jit_expand(z, y, x, nearest, expanded_cell, nz, ny, nx):
+def jit_expand(z, y, x, nearest, expanded_cell):
     for index_3 in range(7): 
         expanded_cell[0][index_3] = np.mod((z + nearest[index_3 + 0]), nz)
         expanded_cell[1][index_3] = np.mod((y + nearest[index_3 + 1]), ny)
         expanded_cell[2][index_3] = np.mod((x + nearest[index_3 + 2]), nx)
     return expanded_cell
 
-@numba.jit
-def expand_indexes(indexes, nz, ny, nx):
+def expand_indexes(indexes):
     # Expand a given set of indexes to include the nearest
     # neighbour points in all directions.
     # indexes is an array of grid indexes
-    # expanded_index = np.array(jit_expand(index_to_zyx(indexes, nz, ny, nx)))
+    # expanded_index = np.array(jit_expand(index_to_zyx(indexes)))
 
-    K_J_I = index_to_zyx( indexes, nz, ny, nx )
+    K_J_I = index_to_zyx( indexes )
 
     expanded_length = (len(indexes) * 6 + len(indexes))
     expanded_index = np.zeros((3, expanded_length), dtype=np.int64)
@@ -53,23 +52,22 @@ def expand_indexes(indexes, nz, ny, nx):
                0, -1, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1] )
     for i in range(len(indexes)):
         jit_expand(K_J_I[0][i], K_J_I[1][i], K_J_I[2][i], \
-            nearest, expanded_cell, nz, ny, nx)
+            nearest, expanded_cell)
         expanded_index[:, i*7:i*7+7] = expanded_cell
 
     # convert back to indexes
     expanded_index = zyx_to_index(expanded_index[0, :],
                                   expanded_index[1, :],
-                                  expanded_index[2, :],
-                                  nz, ny, nx)
+                                  expanded_index[2, :])
 
     return np.unique(expanded_index)
 
 #---------------------------
 
-def find_halo(indexes, MC):
+def find_halo(indexes):
     # Expand the set of core points to include the nearest 
     # neighbour points in all directions.
-    new_indexes = expand_indexes(indexes, MC['nz'], MC['ny'], MC['nx'])
+    new_indexes = expand_indexes(indexes)
 
     # From the expanded mask, select the points outside the core
     # expand_index_list returns only unique values,
@@ -81,10 +79,8 @@ def find_halo(indexes, MC):
 #---------------------------
 
 # TODO: Optimize Eulerian distance calculation (with modifications)
-def calc_distance(point1, point2, MC):
+def calc_distance(point1, point2):
     # Calculate distances corrected for re-entrant domain
-    ny, nx = MC['ny'], MC['nx']
-        
     delta_x = np.abs(point2[2][:] - point1[2][:])
     mask = delta_x >= (nx/2)
     delta_x[mask] = nx - delta_x[mask]
@@ -99,10 +95,9 @@ def calc_distance(point1, point2, MC):
                                         
 #---------------------------
 
-def calc_radii(data, reference, MC):
-    ny, nx = MC['ny'], MC['nx']
-    data_points = np.array(index_to_zyx(data, MC['nz'], MC['ny'], MC['nx']))
-    ref_points = np.array(index_to_zyx(reference, MC['nz'], MC['ny'], MC['nx']))
+def calc_radii(data, reference):
+    data_points = np.array(index_to_zyx(data))
+    ref_points = np.array(index_to_zyx(reference))
     
     result = np.ones(data.shape, np.float)*(nx + ny)
 
@@ -121,7 +116,7 @@ def calc_radii(data, reference, MC):
         k_data = k_data[:, :, np.newaxis] * np.ones((3, m, n))
         k_ref = k_ref[:, np.newaxis, :] * np.ones((3, m, n))
         
-        distances = calc_distance(k_data, k_ref, MC)
+        distances = calc_distance(k_data, k_re)
         
         result[data_mask] = distances.min(1)
 
