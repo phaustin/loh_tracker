@@ -1,4 +1,4 @@
-import os, sys, glob
+import os, sys, glob, json
 import numpy as np
 
 from netCDF4 import Dataset
@@ -32,14 +32,11 @@ def theta(p, T): return T*(p_0/p)**(Rd/cp)
 def theta_v(p, T, qv, qn, qp):
     return theta(p, T_v(T, qv, qn, qp))
 
-def generate_tracking(file_name):
+def generate_tracking(time_step, file_name):
     print(file_name)
-
-    time_step = filelist.index(file_name)
     vars = {'core', 'condensed', 'plume', 'u', 'v', 'w'}
     
     nc_file = Dataset(file_name)
-
     save_file = Dataset('data/cloudtracker_input_%08g.nc' % time_step, 'w')
 
     x = nc_file['x'][:]
@@ -99,7 +96,7 @@ def generate_tracking(file_name):
     print("\tSave core/condensed region", memory_usage())
 
     # Tracer fields
-    tr_field = nc_file['TR01'][0, :].astype(double)
+    tr_field = nc_file['TR01'][0, :].astype(np.double)
     tr_mean = tr_field.reshape((len(z), len(y)*len(x))).mean(1)
     tr_stdev = np.sqrt(tr_field.reshape((len(z), len(y)*len(x))).var(1))
     tr_min = .05 * np.cumsum(tr_stdev)/(np.arange(len(tr_stdev))+1)
@@ -111,13 +108,13 @@ def generate_tracking(file_name):
 
 def main():
     global model_config
-    with open('config.json', 'r') as json_file:
+    with open('model_config.json', 'r') as json_file:
         model_config = json.load(json_file)
 
     filelist = sorted(glob.glob('%s/*.nc' % model_config['variables']))
     for time_step, file_name in enumerate(filelist):
       print("time_step: " + str(time_step))
-      main(file_name)
+      generate_tracking(time_step, file_name)
 
 if __name__ == "__main__":
     main()
