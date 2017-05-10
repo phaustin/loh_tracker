@@ -23,7 +23,6 @@ import numpy as np
 from .utility_functions import index_to_zyx, expand_indexes
 from .load_config import c
 
-
 def expand_cloudlet(cloudlet, indexes):
     """Given an array of indexes composing a cloudlet and a boolean mask
     array indicating if each model index may be expanded into (True) or
@@ -77,7 +76,7 @@ def expand_current_cloudlets(key, cloudlets, mask):
 
 
 def make_new_cloudlets(key, mask):
-    indexes = np.arange(nz * ny * nx)[mask]
+    indexes = np.arange(c.nz * c.ny * c.nx)[mask]
     cloudlets = []
 
     for n in indexes:
@@ -216,9 +215,9 @@ def find_cloudlets(time, core, condensed, plume, u, v, w):
     return 
 
 def load_data(time, ds):
-    core = ds.core.values.copy()
-    condensed = ds.condensed.values.copy()
-    plume = ds.plume.values.copy()
+    core = np.array(ds.core.values, dtype=np.bool)
+    condensed = np.array(ds.condensed.values, dtype=np.bool)
+    plume = np.array(ds.plume.values, dtype=np.bool)
     u = ds.u
     v = ds.v
     w = ds.w
