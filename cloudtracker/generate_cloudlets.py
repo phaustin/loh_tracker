@@ -17,7 +17,7 @@ pkl files are saved in pkl/ subdirectory indexed by time
 
 from netCDF4 import Dataset as nc
 
-import xray, dask, h5py
+import xarray, dask, h5py
 import numpy as np
 
 from .utility_functions import index_to_zyx, expand_indexes
@@ -226,7 +226,7 @@ def load_data(time, ds):
     return core, condensed, plume, u, v, w
 
 def generate_cloudlets():
-    ds = xray.open_mfdataset((("./*.nc")), \
+    ds = xarray.open_mfdataset((("./data/*.nc")), \
         concat_dim="time", chunks=1000)
 
     for time in range(len(ds.time)):
