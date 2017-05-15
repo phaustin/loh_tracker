@@ -195,7 +195,7 @@ def find_cloudlets(time, core, condensed, plume, u, v, w):
 
     cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', \
         'v_condensed', 'w_condensed', 'u_plume', 'v_plume', 'w_plume']
-    filename = './hdf5/cloudlets_{}.h5'.format(time)
+    filename = './hdf5/cloudlets_%08g.h5' % time
     print(" \t%s\n " % filename)
     with h5py.File(filename, 'w') as f:
         # Filter out noisy cloud region
@@ -207,10 +207,9 @@ def find_cloudlets(time, core, condensed, plume, u, v, w):
             grp = f.require_group(str(n))
             for var in cloudlet_items:
                 if(var in ['core', 'condensed', 'plume']):
-                    dset = grp.create_dataset(var,
-                                              data=cloudlets[n][var][...])
-                else:
                     dset = grp.create_dataset(var, data=cloudlets[n][var][...])
+                else:
+                    dset = grp.create_dataset(var, data=cloudlets[n][var])
 
     return 
 

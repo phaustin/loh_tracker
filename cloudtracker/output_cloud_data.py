@@ -157,7 +157,7 @@ def output_clouds_at_time(cloud_graphs, cloud_noise, t):
             for point_type in clouds[id]:
                 dset = grp.create_dataset(point_type, data=clouds[id][point_type])
 
-def output_cloud_data():
+def output_cloud_data(cloud_graphs, cloud_noise):
     for time in range(c.nt):
         print("\n Outputting cloud data, time step: %d" % n)
         output_cloud_data(cloud_graphs, cloud_noise, time)
