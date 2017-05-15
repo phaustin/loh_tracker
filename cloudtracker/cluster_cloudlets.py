@@ -46,8 +46,7 @@ def make_spatial_cloudlet_connections(cloudlets):
             adjacent_condensed = np.unique(adjacent_condensed)
             for id in adjacent_condensed:
                 cloudlet.adjacent['condensed'].append((volumes[id], cloudlets[id]))
-            cloudlet.adjacent['condensed'].sort(key=lambda x:x[0])
-            cloudlet.adjacent['condensed'][::-1]
+            cloudlet.adjacent['condensed'].sort(key=lambda x:x[0], reverse=True)
 
         # Find all cloudlets that have adjacent plumes
         adjacent_plumes = plume_array[cloudlet.plume_halo()]
@@ -57,8 +56,7 @@ def make_spatial_cloudlet_connections(cloudlets):
             adjacent_plumes = np.unique(adjacent_plumes)
             for id in adjacent_plumes:
                 cloudlet.adjacent['plume'].append((volumes[id], cloudlets[id]))
-            cloudlet.adjacent['plume'].sort(key=lambda x:x[0])
-            cloudlet.adjacent['plume'][::-1]
+            cloudlet.adjacent['plume'].sort(key=lambda x:x[0], reverse=True)
 
     return cloudlets
 
@@ -141,8 +139,7 @@ def make_temporal_connections(cloudlets, old_clusters):
             count_overlaps('plume->plume', overlapping_plumes, cloudlet)
                 
         for item in cloudlet.overlap:
-            cloudlet.overlap[item].sort(key=lambda x: x[0])
-            cloudlet.overlap[item][::-1]
+            cloudlet.overlap[item].sort(key=lambda x: x[0], reverse=True)
             
 #---------------------
 
@@ -175,7 +172,7 @@ def create_new_clusters(cloudlets, clusters, max_id):
                 try:
                     core_list.remove( cloudlet )
                 except:
-                    raise
+                    condensed_list.remove( cloudlet )
             cluster.add_cloudlets( acondenseds )
             acondenseds = cluster.adjacent_cloudlets('condensed')
 
@@ -340,8 +337,7 @@ def load_cloudlets(t):
         result = []
         n = 0
 
-        ids = np.array(list(cloudlets.keys()), dtype=int)
-        ids.sort()
+        ids = np.array(list(cloudlets.keys()), dtype=int).sort()
 
         with ThreadPoolExecutor() as executor:
             cloudlet = executor.map(filter_cloudlets, \
