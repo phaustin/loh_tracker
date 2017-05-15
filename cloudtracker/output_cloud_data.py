@@ -159,5 +159,5 @@ def output_clouds_at_time(cloud_graphs, cloud_noise, t):
 
 def output_cloud_data(cloud_graphs, cloud_noise):
     for time in range(c.nt):
-        print("\n Outputting cloud data, time step: %d" % n)
+        print("\n Outputting cloud data, time step: %d" % time)
         output_cloud_data(cloud_graphs, cloud_noise, time)
