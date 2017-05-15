@@ -116,7 +116,7 @@ def calc_radii(data, reference):
         k_data = k_data[:, :, np.newaxis] * np.ones((3, m, n))
         k_ref = k_ref[:, np.newaxis, :] * np.ones((3, m, n))
         
-        distances = calc_distance(k_data, k_re)
+        distances = calc_distance(k_data, k_ref)
         
         result[data_mask] = distances.min(1)
 
