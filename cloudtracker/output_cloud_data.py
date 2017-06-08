@@ -88,7 +88,7 @@ def output_clouds_at_time(cloud_graphs, cloud_noise, t):
     clusters = {}
     items = ['core', 'condensed', 'plume']
     
-    with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
+    with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as cluster_dict:
         keys = np.array(list(cluster_dict.keys()), dtype=int)
         keys.sort()
         for id in keys:

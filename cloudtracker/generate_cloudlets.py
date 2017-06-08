@@ -224,10 +224,9 @@ def load_data(time, ds):
     return core, condensed, plume, u, v, w
 
 def generate_cloudlets():
-    ds = xarray.open_mfdataset((("./data/*.nc")), \
-        concat_dim="time", chunks=1000)
+    ds = xarray.open_mfdataset((("./data/*.nc")), concat_dim="time")
 
-    for time in range(len(ds.time)):
+    for time in range(c.nt):
         core, condensed, plume, u, v, w = load_data(time, ds.isel(time=time))
         find_cloudlets(time, core, condensed, plume, u, v, w)
     

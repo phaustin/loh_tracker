@@ -332,7 +332,7 @@ def filter_cloudlets(cloudlet):
 
 # @profile
 def load_cloudlets(t):
-    with h5py.File( 'cloudtracker/hdf5/cloudlets_%08g.h5' % t) as cloudlets:
+    with h5py.File( 'hdf5/cloudlets_%08g.h5' % t) as cloudlets:
         cloudlet = {}
         result = []
         n = 0
@@ -344,18 +344,18 @@ def load_cloudlets(t):
                                     list(cloudlets.values()), chunksize=512)
             cloudlet = list(cloudlet)
 
-            # for i, item in enumerate(cloudlet):
-            #     if len(item['plume']) > 7 \
-            #         or len(item['condensed']) > 1 \
-            #         or len(item['core']) > 0:
-            #         result.append(Cloudlet( n, t, item))
-            #         n += 1
-            for i, id in enumerate(ids):
-                if len(cloudlet[id]['plume']) > 7 \
-                    or len(cloudlet[id]['condensed']) > 1 \
-                    or len(cloudlet[id]['core']) > 0:
-                    result.append(Cloudlet( n, t, cloudlet[id]))
+            for i, item in enumerate(cloudlet):
+                if len(item['plume']) > 7 \
+                    or len(item['condensed']) > 1 \
+                    or len(item['core']) > 0:
+                    result.append(Cloudlet( n, t, item))
                     n += 1
+            # for i, id in enumerate(ids):
+            #     if len(cloudlet[id]['plume']) > 7 \
+            #         or len(cloudlet[id]['condensed']) > 1 \
+            #         or len(cloudlet[id]['core']) > 0:
+            #         result.append(Cloudlet( n, t, cloudlet[id]))
+            #         n += 1
 
     return result
 
@@ -388,7 +388,7 @@ def cluster_cloudlets():
     print(" \tFound %d clusters\n " % len(new_clusters))
     save_clusters(new_clusters, 0)
     
-    for t in range(1, len(glob.glob('cloudtracker/hdf5/cloudlets_*.h5'))):
+    for t in range(1, c.nt):
         print(" \tcluster cloudlets; time step: %d " % t)
         old_clusters = new_clusters
         cloudlets = load_cloudlets(t)

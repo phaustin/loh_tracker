@@ -7,6 +7,7 @@ import networkx
 
 import numpy as np
 import glob, h5py, dask
+from .load_config import c
 
 # full_output=False
 
@@ -60,8 +61,8 @@ def make_graph():
     merges = {}
     splits = {}
 
-    for t in range(len(glob.glob('cloudtracker/hdf5/clusters_*.h5'))):
-        with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, 'r') as f:
+    for t in range(c.nt):
+        with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as f:
             keys = np.array(list(f.keys()), dtype=int)
             keys.sort()
             for id in keys:
