@@ -1,4 +1,4 @@
-import json
+import ujson as json
 
 class attrdict(dict):
     def __init__(self, *args, **kwargs):
@@ -9,7 +9,7 @@ with open('model_config.json', 'r') as file:
     try:
         config = attrdict(json.load(file))
     except:
-        raise("JSON config dictionary error.")
+        raise("JSON config not found")
 
     case_name = config['case_name']
     c = attrdict(config['config'])
