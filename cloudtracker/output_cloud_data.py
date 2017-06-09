@@ -151,7 +151,7 @@ def output_clouds_at_time(cloud_graphs, cloud_noise, t):
 
     items = ['core', 'condensed', 'plume', 'core_shell', 'condensed_shell']#, \
         # 'core_edge', 'condensed_edge', 'core_env', 'condensed_env']
-    with h5py.File('cloudtracker/hdf5/clouds_%08g.h5' % t, 'w') as f:
+    with h5py.File('hdf5/clouds_%08g.h5' % t, 'w') as f:
         for id in clouds:
             grp = f.create_group(str(id))
             for point_type in clouds[id]:

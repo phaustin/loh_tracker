@@ -362,7 +362,7 @@ def load_cloudlets(t):
 def save_clusters(clusters, t):
     new_clusters = {}
 
-    with h5py.File('cloudtracker/hdf5/clusters_%08g.h5' % t, "w") as f:
+    with h5py.File('hdf5/clusters_%08g.h5' % t, "w") as f:
         for id, clust in clusters.items():
             vlen_str = h5py.special_dtype(vlen=str)
 
