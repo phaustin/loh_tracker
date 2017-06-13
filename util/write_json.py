@@ -27,6 +27,8 @@ def main(case_name):
         json_dict['config']['nt'] = 180
 
         json_dict['config']['dx'] = 25
+        json_dict['config']['dy'] = 25
+        json_dict['config']['dz'] = 25
         json_dict['config']['dt'] = 60
 
         json_dict['config']['ug'] = -8.
@@ -56,6 +58,8 @@ def main(case_name):
         json_dict['config']['nz'] = 194
 
         json_dict['config']['dx'] = 25
+        json_dict['config']['dy'] = 25
+        json_dict['config']['dz'] = 25
         json_dict['config']['dt'] = 60
 
         json_dict['config']['ug'] = 0.
@@ -85,6 +89,8 @@ def main(case_name):
         json_dict['config']['nz'] = 194
 
         json_dict['config']['dx'] = 25
+        json_dict['config']['dy'] = 25
+        json_dict['config']['dz'] = 25
         json_dict['config']['dt'] = 60
 
         json_dict['config']['ug'] = 0.
@@ -114,6 +120,8 @@ def main(case_name):
         json_dict['config']['nt'] = 510
 
         json_dict['config']['dx'] = 25
+        json_dict['config']['dy'] = 25
+        json_dict['config']['dz'] = 25
         json_dict['config']['dt'] = 60
 
         json_dict['config']['ug'] = 10.
@@ -143,6 +151,8 @@ def main(case_name):
         json_dict['config']['nt'] = 180
 
         json_dict['config']['dx'] = 50
+        json_dict['config']['dy'] = 50
+        json_dict['config']['dz'] = 50
         json_dict['config']['dt'] = 60
 
         json_dict['config']['ug'] = -8.
@@ -172,6 +182,8 @@ def main(case_name):
         json_dict['config']['nt'] = 30
 
         json_dict['config']['dx'] = 50
+        json_dict['config']['dy'] = 50
+        json_dict['config']['dz'] = 50
         json_dict['config']['dt'] = 60
 
         json_dict['config']['ug'] = -8.
