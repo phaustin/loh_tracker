@@ -1,6 +1,6 @@
 import os, sys, glob
 import numpy as np
-import json
+import ujson as json
 
 import xarray as xr
 from netCDF4 import Dataset as nc
@@ -67,21 +67,20 @@ def generate_tracking(time, file):
 
         # Flag for netCDF compression (very effective for large, sparse arrays)
         encoding = {}
-        if False:
+        if True:
             encoding = {var: dict(zlib=True) for var in ds.data_vars}
         ds.to_netcdf('data/cloudtracker_input_%08g.nc' % time, encoding=encoding)
-        print(ds)
 
 def main():
     global model_config
-    with open('config.json', 'r') as json_file:
+    with open('model_config.json', 'r') as json_file:
         model_config = json.load(json_file)
+        nt = model_config['config']['nt']
 
     filelist = sorted(glob.glob('%s/*.nc' % model_config['variables']))
-    for time in range(len(filelist)):
-        print('\t Working...%s/%s                        ' % (time, 180), end='\r')
+    for time in range(nt):
+        print('\t Working...%s/%s                        ' % (time, nt), end='\r')
         generate_tracking(time, filelist[time])
-        break
 
 if __name__ == "__main__":
     main()
