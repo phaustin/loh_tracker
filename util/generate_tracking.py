@@ -32,10 +32,10 @@ def generate_tracking(time, file):
         w_field = (w_field + np.roll(w_field, 1, axis=0)) / 2
 
         u_field = f['U'][:]
-        w_field = (w_field + np.roll(u_field, 1, axis=1)) / 2
+        u_field = (u_field + np.roll(u_field, 1, axis=1)) / 2
 
         v_field = f['V'][:]
-        w_field = (w_field + np.roll(v_field, 1, axis=2)) / 2
+        v_field = (v_field + np.roll(v_field, 1, axis=2)) / 2
 
         print("\t Calculating buoynacy fields...")
         qn_field = f['QN'][:] / 1e3
@@ -54,16 +54,16 @@ def generate_tracking(time, file):
         print("\t Saving DataArrays...")
         ds = xr.Dataset(coords= {'z': f.z, 'y':f.y, 'x':f.x})
 
-        mask = (qn_field > 1e-4) | (w_field > 0.2)
+        mask = (qn_field > 1e-4) | (w_field > 0.)
         ds['u'] = u_field.where(mask)
         ds['v'] = v_field.where(mask)
         ds['w'] = w_field.where(mask)
     
-        ds['core'] = (w_field > 0.) * (buoy_field > 0.) & (qn_field > 1e-4)
+        ds['core'] = (w_field > 0.) & (buoy_field > 0.) & (qn_field > 1e-4)
         ds['condensed'] = (qn_field > 1e-4)
         ds['plume'] = xr.DataArray(tr_field > 
-                       np.max(np.array([tr_mean + tr_stdev, tr_min]), 0)[:, None, None],
-                       dims=['z', 'y', 'x'])
+                np.max(np.array([tr_mean + tr_stdev, tr_min]), 0)[:, None, None], 
+                dims=['z', 'y', 'x'])
 
         # Flag for netCDF compression (very effective for large, sparse arrays)
         encoding = {}
