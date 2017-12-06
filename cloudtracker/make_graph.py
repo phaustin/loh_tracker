@@ -177,7 +177,7 @@ def make_graph():
                 plume_volume = plume_volume + plume_vol
                 plume_time.add(int(node[:8]))
 
-        if (len(plume_time) < 2) and (len(condensed_time) < 2):
+        if (len(condensed_time) < 2) and (len(core_time) == 0):
             cloud_noise.append(subgraph)
         else:
             plume_time = list(plume_time)
