@@ -53,21 +53,20 @@ def generate_tracking(time, file):
         #---- Dataset for storage 
         print("\t Saving DataArrays...")
         ds = xr.Dataset(coords= {'z': f.z, 'y':f.y, 'x':f.x})
-
-        mask = (qn_field > 1e-4) | (w_field > 0.)
-        ds['u'] = u_field.where(mask)
-        ds['v'] = v_field.where(mask)
-        ds['w'] = w_field.where(mask)
+        
+        ds['u'] = u_field
+        ds['v'] = v_field
+        ds['w'] = w_field
     
-        ds['core'] = (w_field > 0.) & (buoy_field > 0.) & (qn_field > 1e-4)
-        ds['condensed'] = (qn_field > 1e-4)
+        ds['core'] = (w_field > 0.) & (buoy_field > 0.) & (qn_field > 0)
+        ds['condensed'] = (qn_field > 0)
         ds['plume'] = xr.DataArray(tr_field > 
                 np.max(np.array([tr_mean + tr_stdev, tr_min]), 0)[:, None, None], 
                 dims=['z', 'y', 'x'])
 
         # Flag for netCDF compression (very effective for large, sparse arrays)
         encoding = {}
-        if True:
+        if False:
             encoding = {var: dict(zlib=True) for var in ds.data_vars}
         ds.to_netcdf('data/cloudtracker_input_%08g.nc' % time, encoding=encoding)
 

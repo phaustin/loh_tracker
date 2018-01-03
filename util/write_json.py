@@ -34,6 +34,37 @@ def main(case_name):
         json_dict['config']['ug'] = -8.
         json_dict['config']['vg'] = 0.
 
+    elif case_name == 'CGILS_CTL':
+        #---- CGILS_CTL
+        json_dict = {}
+        json_dict['config'] = {}
+
+        stat_file = 'ENT_CGILS_CTL_S6_3D_384x384x194_25m_1s_stat.nc'
+        location = '/newtera/loh/data/CGILS_CTL'
+
+        json_dict['case_name'] = case_name
+        json_dict['location'] = location
+        
+        json_dict['condensed'] = '%s/condensed_entrain' % location
+        json_dict['core'] = '%s/core_entrain' % location
+        json_dict['stat_file'] = '%s/%s' % (location, stat_file)
+        json_dict['tracking'] = '%s/tracking' % location
+        json_dict['variables'] = '%s/variables' % location
+
+        # Model parameters
+        json_dict['config']['nt'] = 360
+        json_dict['config']['nx'] = 384
+        json_dict['config']['ny'] = 384
+        json_dict['config']['nz'] = 194
+
+        json_dict['config']['dx'] = 25
+        json_dict['config']['dy'] = 25
+        json_dict['config']['dz'] = 25
+        json_dict['config']['dt'] = 60
+
+        json_dict['config']['ug'] = 0.
+        json_dict['config']['vg'] = 0.
+
     elif case_name == 'CGILS_300K':
         #---- CGILS_300K
         json_dict = {}
