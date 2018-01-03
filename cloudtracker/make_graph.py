@@ -6,51 +6,48 @@ import pickle
 import networkx
 
 import numpy as np
-import glob, h5py, dask
+import glob, h5py, json, dask
 from .load_config import c
 
-# full_output=False
+full_output=True
 
-# def full_output(cloud_times, cloud_graphs, merges, splits, MC):
-#     cloud_times = tuple(cloud_times)
+def full_output(cloud_times, cloud_graphs, merges, splits):
+    cloud_times = tuple(cloud_times)
 
-#     pickle.dump(cloud_times, open('pkl/cloud_times.pkl','wb'))
+    n = 0
+    clouds = {}
+    for subgraph in cloud_graphs:
+        events = {'has_condensed': False, 'has_core': False}
+        for node in subgraph:
+            node_events = []
+            t = int(node[:8])
+            if t == 0: node_events.append('break_start')
+            if t == (c.nt-1): node_events.append('break_end')
 
-#     n = 0
-#     clouds = {}
-#     for subgraph in cloud_graphs:
-#         events = {'has_condensed': False, 'has_core': False}
-#         for node in subgraph:
-#             node_events = []
-#             t = int(node[:8])
-#             if t == 0: node_events.append('break_start')
-#             if t == (MC['nt']-1): node_events.append('break_end')
-
-#             if node in merges:
-#                 node_events.append('merge_end')
-#             if node in splits:
-#                 node_events.append('split')
+            if node in merges:
+                node_events.append('merge_end')
+            if node in splits:
+                node_events.append('split')
                 
-#             info = subgraph.node[node]
-#             if info['merge']:
-#                 node_events.append('merge')
-#             if info['split']:
-#                 node_events.append('split_start')
+            info = subgraph.node[node]
+            if info['merge']:
+                node_events.append('merge')
+            if info['split']:
+                node_events.append('split_start')
                 
-#             events['has_condensed'] = (info['condensed'] > 0) or events['has_condensed']
-#             events['has_core'] = (info['core'] > 0) or events['has_core']
+            events['has_condensed'] = (info['condensed'] > 0) or events['has_condensed']
+            events['has_core'] = (info['core'] > 0) or events['has_core']
 
-#             if t in events:
-#                 events[t].extend(node_events)
-#             else:
-#                 events[t] = node_events[:]
+            if t in events:
+                events[t].extend(node_events)
+            else:
+                events[t] = node_events[:]
 
-#         clouds[n] = events
-#         n = n + 1
+        clouds[n] = events
+        n = n + 1
 
-#     pickle.dump(clouds, open('pkl/graph_events.pkl', 'wb'))
-
-    
+    with open('hdf5/events.json', 'w') as f:
+        json.dump(clouds, f, indent=4)
 
 
 #---------------------
@@ -149,7 +146,6 @@ def make_graph():
                     t = int(node[:8])
                     graph.add_edge(node, '%08g|%08g' % (t-1, item))
 
-
     cloud_graphs = []
     cloud_noise = []
     for subgraph in networkx.connected_component_subgraphs(graph):
@@ -191,8 +187,9 @@ def make_graph():
             
     cloud_graphs.sort(key=lambda key:keys[0])
     cloud_graphs.reverse()
+    cloud_times = [item[2:] for item in cloud_graphs] 
     cloud_graphs = [item[1] for item in cloud_graphs]
     
-    #if full_output: full_output(cloud_times, cloud_graphs, merges, splits, MC)
-
+    if full_output: full_output(cloud_times, cloud_graphs, merges, splits)
+    raise
     return cloud_graphs, cloud_noise
