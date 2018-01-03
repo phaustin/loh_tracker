@@ -15,27 +15,26 @@ The dictionaries have the structure:
 pkl files are saved in pkl/ subdirectory indexed by time
 """
 
-from __future__ import print_function
-from __future__ import absolute_import
+from netCDF4 import Dataset as nc
 
-import numpy
+import xarray, dask, h5py
+import numpy as np
 
 from .utility_functions import index_to_zyx, expand_indexes
+from .load_config import c
 
-#-------------------
-
-def expand_cloudlet(cloudlet, indexes, MC):
-    """Given an array of indexes composing a cloudlet and a boolean mask 
-    array indicating if each model index may be expanded into (True) or 
-    not (False), expand the cloudlet into the permissable indicies that 
+def expand_cloudlet(cloudlet, indexes):
+    """Given an array of indexes composing a cloudlet and a boolean mask
+    array indicating if each model index may be expanded into (True) or
+    not (False), expand the cloudlet into the permissable indicies that
     are find all indicies adjacent to the cloudlet.
-    
-    Returns an array of the indicies composing the expanded cloudlet, and 
+
+    Returns an array of the indicies composing the expanded cloudlet, and
     an array of the remaining indicies that may be expanded into.
     """
 
     # Expand the cloudlet indexes into their nearest neighbours
-    expanded_cloudlet = expand_indexes(cloudlet, MC)
+    expanded_cloudlet = expand_indexes(cloudlet)
 
     # Find the mask values of the expanded indexes
     mask = indexes[expanded_cloudlet]
@@ -50,8 +49,7 @@ def expand_cloudlet(cloudlet, indexes, MC):
 
 #---------------------
 
-def expand_current_cloudlets(key, cloudlets, mask, MC):
-
+def expand_current_cloudlets(key, cloudlets, mask):
     cloudlet_points = []
     for cloudlet in cloudlets:
         cloudlet_points.append( [cloudlet[key]] )
@@ -60,39 +58,36 @@ def expand_current_cloudlets(key, cloudlets, mask, MC):
 
     while cloudlet_expand_indexes:
         next_loop_cloudlet_list = []
-            
+
         # Go through the current list of cloudlets
         for n in cloudlet_expand_indexes:
-            expanded_points, mask = expand_cloudlet(cloudlet_points[n][-1], 
-                                                    mask,  
-                                                    MC)
+            expanded_points, mask = expand_cloudlet(cloudlet_points[n][-1], mask)
 
             if len(expanded_points) > 0:
                 cloudlet_points[n].append(expanded_points)
                 next_loop_cloudlet_list.append(n)
-                
+
         cloudlet_expand_indexes = next_loop_cloudlet_list
-                
+
     for n, cloudlet in enumerate(cloudlet_points):
-        cloudlets[n][key] = numpy.hstack(cloudlet)
+        cloudlets[n][key] = np.hstack(cloudlet)
 
     return cloudlets, mask
 
-#---------------------
 
-def make_new_cloudlets(key, mask, MC):
-    indexes = numpy.arange(MC['nx']*MC['ny']*MC['nz'])[mask]
+def make_new_cloudlets(key, mask):
+    indexes = np.arange(c.nz * c.ny * c.nx)[mask]
     cloudlets = []
 
     for n in indexes:
         if mask[n]:
             mask[n] = False
-            cloudlet_indexes = [numpy.array((n,))]
-            
+            cloudlet_indexes = [np.array((n,))]
+
             # add_new_cloudlet
-            done = False            
+            done = False
             while not done:
-                new_indexes, mask = expand_cloudlet(cloudlet_indexes[-1], mask, MC)
+                new_indexes, mask = expand_cloudlet(cloudlet_indexes[-1], mask)
 
                 if len(new_indexes) > 0:
                     cloudlet_indexes.append( new_indexes )
@@ -101,113 +96,140 @@ def make_new_cloudlets(key, mask, MC):
                     done = True
         
             cloudlet = {}
-            cloudlet[key] = numpy.hstack(cloudlet_indexes)
+            cloudlet[key] = np.hstack(cloudlet_indexes)
             cloudlets.append( cloudlet )
             
     return cloudlets
 
 #-----------------
 
-def find_mean_cloudlet_velocity(cloudlets, 
-                                u, v, w, 
-                                MC):
-    dx, dy, dz, dt = MC['dx'], MC['dy'], MC['dz'], MC['dt']                                
-    ug, vg = MC['ug'], MC['vg']
+def find_mean_cloudlet_velocity(cloudlets, u, v, w):
+    dx, dy, dz = c.dx, c.dy, c.dz
+
     for cloudlet in cloudlets:
         if len(cloudlet['condensed']) > 0:
-            K, J, I = index_to_zyx( cloudlet['condensed'], MC )
+            K, J, I = index_to_zyx(cloudlet['condensed'])
             # find the mean motion of the cloudlet
-            u_mean = u[K, J, I].mean()-ug
-            v_mean = v[K, J, I].mean()-vg
-            w_mean = w[K, J, I].mean()
+            u_mean = np.mean(u[K, J, I]) - c.ug
+            v_mean = np.mean(v[K, J, I]) - c.vg
+            w_mean = np.mean(w[K, J, I])
         
-            cloudlet['u_condensed'] = round(u_mean*dt/dx)
-            cloudlet['v_condensed'] = round(v_mean*dt/dy)
-            cloudlet['w_condensed'] = round(w_mean*dt/dz)
+            cloudlet['u_condensed'] = (u_mean * c.dt / dx)
+            cloudlet['v_condensed'] = (v_mean * c.dt / dy)
+            cloudlet['w_condensed'] = (w_mean * c.dt / dz)
         else:
             cloudlet['u_condensed'] = 0.
             cloudlet['v_condensed'] = 0.
             cloudlet['w_condensed'] = 0.
 
-
-        K, J, I = index_to_zyx( cloudlet['plume'], MC )
+        K, J, I = index_to_zyx(cloudlet['plume'])
         # find the mean motion of the cloudlet
-        u_mean = u[K, J, I].mean()-ug
-        v_mean = v[K, J, I].mean()-vg
-        w_mean = w[K, J, I].mean()
+        u_mean = np.mean(u[K, J, I]) - c.ug
+        v_mean = np.mean(v[K, J, I]) - c.vg
+        w_mean = np.mean(w[K, J, I])
         
-        cloudlet['u_plume'] = round(u_mean*dt/dx)
-        cloudlet['v_plume'] = round(v_mean*dt/dy)
-        cloudlet['w_plume'] = round(w_mean*dt/dz)
+        cloudlet['u_plume'] = (u_mean * c.dt / dx)
+        cloudlet['v_plume'] = (v_mean * c.dt / dy)
+        cloudlet['w_plume'] = (w_mean * c.dt / dz)
 
     return cloudlets
 
 #----------------------------
 
-def generate_cloudlets(core, condensed, plume, u, v, w, MC): 
+def find_cloudlets(time, core, condensed, plume, u, v, w): 
     # find the indexes of all the core and plume points
-    core = core.flatten()
-    condensed = condensed.flatten()
-    plume = plume.flatten()
+    core = np.ravel(core)
+    condensed = np.ravel(condensed)
+    plume = np.ravel(plume)
 
     plume[condensed] = False
     condensed[core] = False
 
     # Create the list that will hold the cloudlets
-    cloudlets = make_new_cloudlets('core', core, MC)
+    cloudlets = make_new_cloudlets('core', core)
                     
     for cloudlet in cloudlets:
         cloudlet['condensed'] = cloudlet['core'][:]
             
     ncore = len(cloudlets)
-    print("\t%d core cloudlets" % ncore) 
+    print(" \t%d core cloudlets" % ncore) 
 
     cloudlets, condensed = expand_current_cloudlets('condensed', 
                                                     cloudlets,
-                                                    condensed,
-                                                    MC)
+                                                    condensed)
 
     # Add any remaining points that have not been added to cloudlets 
     # as new cloudlets.
-    condensed_cloudlets = make_new_cloudlets('condensed', condensed, MC)
+    condensed_cloudlets = make_new_cloudlets('condensed', condensed)
 
     for cloudlet in condensed_cloudlets:
-        cloudlet['core'] = numpy.array([], dtype=numpy.int)
+        cloudlet['core'] = np.array([], dtype=np.int)
         cloudlets.append(cloudlet)
 
     for cloudlet in cloudlets:
         cloudlet['plume'] = cloudlet['condensed'][:]
 
     ncondensed = len(cloudlets)
-    print("\t%d condensed cloudlets" % (ncondensed-ncore))
+    print(" \t%d condensed cloudlets" % (ncondensed-ncore))
 
 
     cloudlets, plume = expand_current_cloudlets('plume', 
                                                  cloudlets,
-                                                 plume,
-                                                 MC)
+                                                 plume)
 
     # Add any remaining points that have not been added to cloudlets 
     # as new cloudlets.
-    plume_cloudlets = make_new_cloudlets('plume', plume, MC)
+    plume_cloudlets = make_new_cloudlets('plume', plume)
 
     for cloudlet in plume_cloudlets:
-        cloudlet['core'] = numpy.array([], dtype=numpy.int)
-        cloudlet['condensed'] = numpy.array([], dtype=numpy.int)
+        cloudlet['core'] = np.array([], dtype=np.int)
+        cloudlet['condensed'] = np.array([], dtype=np.int)
         cloudlets.append(cloudlet)
 
     nplume = len(cloudlets)
     
-    print("\t%d plume cloudlets" % (nplume-ncondensed))
+    print(" \t%d plume cloudlets" % (nplume-ncondensed))
 
-    cloudlets = find_mean_cloudlet_velocity(cloudlets, 
-                                            u, v, w,
-                                            MC)
+    u, v, w = u.values, v.values, w.values
+    cloudlets = find_mean_cloudlet_velocity(cloudlets, u, v, w)
 
-    return cloudlets
+    cloudlet_items = ['core', 'condensed', 'plume', 'u_condensed', \
+        'v_condensed', 'w_condensed', 'u_plume', 'v_plume', 'w_plume']
+    filename = './hdf5/cloudlets_%08g.h5' % time
+    print(" \t%s\n " % filename)
+    with h5py.File(filename, 'w') as f:
+        # Filter out noisy cloud region
+        for n in range(len(cloudlets)):
+            # if (cloudlets[n]['plume'].size > 7
+            #     or (cloudlets[n]['condensed'].size > 1)
+            #     or (cloudlets[n]['core'].size > 0)):
 
+            grp = f.require_group(str(n))
+            for var in cloudlet_items:
+                if(var in ['core', 'condensed', 'plume']):
+                    dset = grp.create_dataset(var, data=cloudlets[n][var][...])
+                else:
+                    dset = grp.create_dataset(var, data=cloudlets[n][var])
+
+    return 
+
+def load_data(time, ds):
+    core = np.array(ds.core.values, dtype=np.bool)
+    condensed = np.array(ds.condensed.values, dtype=np.bool)
+    plume = np.array(ds.plume.values, dtype=np.bool)
+    u = ds.u
+    v = ds.v
+    w = ds.w
+
+    return core, condensed, plume, u, v, w
+
+def generate_cloudlets():
+    ds = xarray.open_mfdataset((("./data/*.nc")), concat_dim="time")
+
+    for time in range(c.nt):
+        core, condensed, plume, u, v, w = load_data(time, ds.isel(time=time))
+        find_cloudlets(time, core, condensed, plume, u, v, w)
     
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-

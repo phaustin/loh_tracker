@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 #Runtime (690,130,128,128): ?
 
-import cPickle as pickle
-import h5py
-import gc
+import pickle
+
 import networkx
-import numpy
 
-full_output=False
+import numpy as np
+import glob, h5py, json, dask
+from .load_config import c
 
-def full_output(cloud_times, cloud_graphs, merges, splits, MC):
+full_output=True
+
+def full_output(cloud_times, cloud_graphs, merges, splits):
     cloud_times = tuple(cloud_times)
-
-    pickle.dump(cloud_times, open('pkl/cloud_times.pkl','wb'))
 
     n = 0
     clouds = {}
@@ -22,7 +22,7 @@ def full_output(cloud_times, cloud_graphs, merges, splits, MC):
             node_events = []
             t = int(node[:8])
             if t == 0: node_events.append('break_start')
-            if t == (MC['nt']-1): node_events.append('break_end')
+            if t == (c.nt-1): node_events.append('break_end')
 
             if node in merges:
                 node_events.append('merge_end')
@@ -46,38 +46,34 @@ def full_output(cloud_times, cloud_graphs, merges, splits, MC):
         clouds[n] = events
         n = n + 1
 
-    pickle.dump(clouds, open('pkl/graph_events.pkl', 'wb'))
-
-    
+    with open('hdf5/events.json', 'w') as f:
+        json.dump(clouds, f, indent=4)
 
 
 #---------------------
 
-def make_graph(MC):
+def make_graph():
     graph = networkx.Graph()
 
     merges = {}
     splits = {}
 
-    for t in range(MC['nt']):
-        with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as clusters:
-
-            keys = numpy.array(clusters.keys(), dtype=int)
+    for t in range(c.nt):
+        with h5py.File('hdf5/clusters_%08g.h5' % t, 'r') as f:
+            keys = np.array(list(f.keys()), dtype=int)
             keys.sort()
             for id in keys:
-                # Make dictionaries of every split and every merge event that occurs
-                # in a cluster's lifecycle
-                m_conns = set(clusters['%s/merge_connections' % id])
-                s_conns = set(clusters['%s/split_connections' % id])
-                core = len(clusters['%s/core' % id])
-                condensed = len(clusters['%s/condensed' % id])
-                plume = len(clusters['%s/plume' % id])
+                m_conns = set(f['%s/merge_connections' % id][...])
+                s_conns = set(f['%s/split_connections' % id][...])
+                core = len(f['%s/core' % id])
+                condensed = len(f['%s/condensed' % id])
+                plume = len(f['%s/plume' % id])
                 attr_dict = {'merge': m_conns,
                              'split': s_conns,
                              'core': core,
                              'condensed': condensed,
                              'plume': plume}
-                             
+
                 for item in m_conns:
                     node1 = '%08g|%08g' % (t, id)
                     node2 = '%08g|%08g' % (t-1, item)
@@ -89,22 +85,34 @@ def make_graph(MC):
             
                 # Construct a graph of the cloudlet connections
                 graph.add_node('%08g|%08g' % (t, id), attr_dict = attr_dict)
-                if clusters[str(id)]['past_connections']:
-                    for item in clusters[str(id)]['past_connections']:
+                if f['%s/past_connections' % id]:
+                    for item in f['%s/past_connections' % id]:
                         graph.add_edge('%08g|%08g' % (t-1, item),
                                        '%08g|%08g' % (t, id))
 
     # Iterate over every cloud in the graph
     for subgraph in networkx.connected_component_subgraphs(graph):
         # Find the duration over which the cloud_graph has cloudy points.
-        times = set()
+        condensed_times = set()
         for node in subgraph:
             if subgraph.node[node]['condensed'] > 0:
-                times.add(int(node[:8]))
+                condensed_times.add(int(node[:8]))
+
+        plume_times = set()
+        for node in subgraph:
+            if subgraph.node[node]['plume'] > 0:
+                plume_times.add(int(node[:8]))
 
         # If cloud exists for less than 5 minutes, check if it has split events
         # If it has split events, remove them and reconnect the cloud
-        if len(times) < 5:
+        if (len(condensed_times) < 5):
+            for node in subgraph:
+                if subgraph.node[node]['split']:
+                    item = subgraph.node[node]['split'].pop()
+                    t = int(node[:8]) 
+                    graph.add_edge(node, '%08g|%08g' % (t, item))
+
+        if (len(plume_times) < 5):
             for node in subgraph:
                 if subgraph.node[node]['split']:
                     item = subgraph.node[node]['split'].pop()
@@ -113,56 +121,75 @@ def make_graph(MC):
 
     for subgraph in networkx.connected_component_subgraphs(graph):
         # Find the duration over which the cloud_graph has cloudy points.
-        times = set()
+        condensed_times = set()
         for node in subgraph:
             if subgraph.node[node]['condensed'] > 0:
-                times.add(int(node[:8]))
+                condensed_times.add(int(node[:8]))
+
+        plume_times = set()
+        for node in subgraph:
+            if subgraph.node[node]['plume'] > 0:
+                plume_times.add(int(node[:8]))
 
         # If a cloud exists less than 5 minutes, check for merge events
-        if len(times) < 5:
+        if (len(condensed_times) < 5):
             for node in subgraph:
                 if subgraph.node[node]['merge']:
                     item = subgraph.node[node]['merge'].pop()
                     t = int(node[:8])
                     graph.add_edge(node, '%08g|%08g' % (t-1, item))
 
+        if (len(plume_times) < 5):
+            for node in subgraph:
+                if subgraph.node[node]['merge']:
+                    item = subgraph.node[node]['merge'].pop()
+                    t = int(node[:8])
+                    graph.add_edge(node, '%08g|%08g' % (t-1, item))
 
-    cloud_times = []
-    
     cloud_graphs = []
     cloud_noise = []
     for subgraph in networkx.connected_component_subgraphs(graph):
-        # If a cloud exists less than 2 minutes, classify it as noise
-        # Otherwise, put it in cloud_graphs
+        plume_time = set()
         condensed_time = set()
         core_time = set()
+
+        plume_volume = 0
         condensed_volume = 0
         core_volume = 0
+
         for node in subgraph.nodes():
             condensed_vol = subgraph.node[node]['condensed'] 
             if condensed_vol > 0:
                 condensed_volume = condensed_volume + condensed_vol
-                time = int(node[:8])
-                condensed_time.add(time)
+                condensed_time.add(int(node[:8]))
 
             core_vol = subgraph.node[node]['core'] 
             if core_vol > 0:
                 core_volume = core_volume + core_vol
-                time = int(node[:8])
-                core_time.add(time)
+                core_time.add(int(node[:8]))
 
-        if (len(condensed_time) < 2) or (len(core_time) == 0):
+            plume_vol = subgraph.node[node]['plume']
+            if plume_vol > 0:
+                plume_volume = plume_volume + plume_vol
+                plume_time.add(int(node[:8]))
+
+        if (len(condensed_time) < 2) and (len(core_time) == 0):
             cloud_noise.append(subgraph)
         else:
-            cloud_graphs.append((condensed_volume, subgraph))
-            times = list(times)
-            times.sort()
-            cloud_times.append(tuple(times))
-
-    cloud_graphs.sort()
+            plume_time = list(plume_time)
+            plume_time.sort()
+            condensed_time = list(condensed_time)
+            condensed_time.sort()
+            core_time = list(core_time)
+            core_time.sort()
+            cloud_graphs.append((condensed_volume, subgraph, \
+                                plume_time, condensed_time, core_time))
+            
+    cloud_graphs.sort(key=lambda key:keys[0])
     cloud_graphs.reverse()
+    cloud_times = [item[2:] for item in cloud_graphs] 
     cloud_graphs = [item[1] for item in cloud_graphs]
     
-    #if full_output: full_output(cloud_times, cloud_graphs, merges, splits, MC)
-
+    if full_output: full_output(cloud_times, cloud_graphs, merges, splits)
+    raise
     return cloud_graphs, cloud_noise

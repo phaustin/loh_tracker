@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 
-import numpy
-from utility_functions import expand_indexes, \
-        index_to_zyx, find_halo, calc_distance
+import numpy, code
+from .utility_functions import expand_indexes, index_to_zyx, \
+                                find_halo, calc_distance
+from .load_config import c
 
-def calc_com(mask, MC):
-    ny, nx = MC['ny'], MC['nx']
-    pts = index_to_zyx( mask, MC )
+nx = c.nx
+ny = c.ny
+nz = c.nz
 
-    z = pts[0,:].astype(float).mean()
+def calc_com(mask):
+    pts = index_to_zyx(mask)
+
+    z = pts[0][:].astype(float).mean()
     # Correct Center of Mass for reentrant domain
-    y1 = pts[1,:].astype(float)
-    x1 = pts[2,:].astype(float)
+    y1 = pts[1][:].astype(float)
+    x1 = pts[2][:].astype(float)
     y2 = (y1 < ny/2.)*y1 + (y1>= ny/2.)*(y1 - ny)
     x2 = (x1 < nx/2.)*x1 + (x1>= nx/2.)*(x1 - nx)
     y1m = y1.mean()
@@ -38,11 +42,10 @@ def calc_com(mask, MC):
 
 #----------------------------
 
-#def calc_distance(point1, point2, MC):
+#def calc_distance(point1, point2):
 #    # Calculate distances corrected for reentrant domain
 #    point1 = numpy.atleast_2d(point1)
 #    point2 = numpy.atleast_2d(point2)
-#    ny, nx = MC['ny'], MC['nx']
 #    
 #    delta_x = numpy.abs(point2[2, :] - point1[2, :])
 #    mask = delta_x >= (nx/2)
@@ -59,10 +62,9 @@ def calc_com(mask, MC):
 #----------------------------
 
 class Cloudlet:
-    def __init__(self, id, time, cloudlet_dict, MC):
+    def __init__(self, id, time, cloudlet_dict):
         self.id = id
         self.time = time
-        self.MC = MC
 
         self.masks = {}
         for item in ('core', 'condensed', 'plume'):
@@ -106,18 +108,18 @@ class Cloudlet:
         return self.masks['condensed']
 
     def condensed_halo(self):
-        return find_halo( self.condensed_mask(), self.MC )
+        return find_halo(self.condensed_mask())
 
     def plume_mask(self):
         return self.masks['plume']
 
     def plume_halo(self):
-        return find_halo( self.plume_mask(), self.MC )
+        return find_halo(self.plume_mask())
 
 #----------------------------
 
 class Cluster:
-    def __init__(self, cluster_id, initial_cloudlets, MC):
+    def __init__(self, cluster_id, initial_cloudlets):
         self.id = cluster_id
         self.cloudlets = set()
         self.past_connections = set()
@@ -125,7 +127,6 @@ class Cluster:
         self.merge_connections = set()
         self.add_cloudlets(initial_cloudlets)
         self.events = []
-        self.MC = MC
 
     def add_cloudlet(self, cloudlet):
         if not cloudlet.cluster:
@@ -176,10 +177,10 @@ class Cluster:
         return numpy.hstack(clist)
 
     def condensed_halo(self):
-        return find_halo( self.condensed_mask(), self.MC )
+        return find_halo(self.condensed_mask())
 
     def plume_halo(self):
-        return find_halo( self.plume_mask(), self.MC )
+        return find_halo(self.plume_mask())
 
     def adjacent_cloudlets(self, key):
         result = {}
@@ -192,7 +193,7 @@ class Cluster:
                         result[adjacent_cloudlet] = volume
                         
         final = [(result[cloudlet], cloudlet) for cloudlet in result]
-        final.sort()
+        final.sort(key=lambda key:key[0])
         final.reverse()
         result = [item[1] for item in final]
         return result
@@ -228,7 +229,7 @@ class Cluster:
                     mask.append(cloudlet.plume_mask())
                 mask = numpy.hstack(mask)
                     
-                if (mask < self.MC['nx']*self.MC['ny']).any():
+                if (mask < nx * ny).any():
                     attached_groups.append(group)
                 else:
                     detached_groups.append(group)
@@ -240,23 +241,23 @@ class Cluster:
                     for cloudlet in group:
                         volume += cloudlet.volume
                     volumes.append((volume, group))                    
-                volumes.sort()
+                volumes.sort(key=lambda key:key[0])
                 
                 if detached_groups:
                     attached_group_masks = []
                     for group in attached_groups:
                         mask_list = [cloudlet.condensed_mask() for cloudlet in group]
                         mask = numpy.hstack(mask_list)
-                        attached_group_masks.append((calc_com(mask, self.MC), group))
+                        attached_group_masks.append((calc_com(mask), group))
     
                     for item in detached_groups:
                         mask_list = [cloudlet.condensed_mask() for cloudlet in item]
                         item_mask = numpy.hstack(mask_list)
-                        item_com = calc_com(item_mask, self.MC)
+                        item_com = calc_com(item_mask)
 
-                        com_list = [(calc_distance(item_com, current_group[0], self.MC), current_group[1]) 
+                        com_list = [(calc_distance(item_com, current_group[0]), current_group[1]) 
                                     for current_group in attached_group_masks]
-                        com_list.sort()
+                        com_list.sort(key=lambda key:key[0])
                         com_list[0][1].extend(item)
                     
                 groups = attached_groups
