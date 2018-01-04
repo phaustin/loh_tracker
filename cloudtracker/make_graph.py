@@ -84,7 +84,11 @@ def make_graph():
                     splits[node2] = node1            
             
                 # Construct a graph of the cloudlet connections
-                graph.add_node('%08g|%08g' % (t, id), attr_dict = attr_dict)
+                graph.add_node('%08g|%08g' % (t, id), merge= m_conns,
+                                                     split= s_conns,
+                                                     core= core,
+                                                     condensed= condensed,
+                                                     plume= plume)
                 if f['%s/past_connections' % id]:
                     for item in f['%s/past_connections' % id]:
                         graph.add_edge('%08g|%08g' % (t-1, item),
@@ -191,5 +195,4 @@ def make_graph():
     cloud_graphs = [item[1] for item in cloud_graphs]
     
     if full_output: full_output(cloud_times, cloud_graphs, merges, splits)
-    raise
     return cloud_graphs, cloud_noise
