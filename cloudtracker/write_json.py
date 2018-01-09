@@ -1,6 +1,31 @@
-import sys, json, pprint
+"""
 
-def main(case_name):
+example:
+python -m cloudtracker.util.write_json BOMEX
+
+"""
+import json
+import pprint
+import argparse
+
+
+def make_parser():
+    linebreaks = argparse.RawTextHelpFormatter
+    descrip = __doc__.ljust(80)
+    parser = argparse.ArgumentParser(formatter_class=linebreaks,
+                                     description=descrip)
+    parser.add_argument('casename', type=str, help='')
+    return parser
+
+def main(args=None):
+    """
+    args: optional -- if missing then args will be taken from command line
+          or pass casename
+    """
+    parser = make_parser()
+    args = parser.parse_args(args)
+    case_name=args.casename
+
     json_dict = {}
 
     if case_name == 'BOMEX':
@@ -228,11 +253,7 @@ def main(case_name):
         print('Wrote {} using util.write_json'.format('model_config.json'))
         pp = pprint.PrettyPrinter(indent=1)
         pp.pprint(json_dict)
-
+        
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        main(sys.argv[-1])
-    else:
-        print("Missing parameter")
-        print("For example, run python write_json.py BOMEX \n")
-        raise ValueError('Case name is not given')
+    main()
+    
